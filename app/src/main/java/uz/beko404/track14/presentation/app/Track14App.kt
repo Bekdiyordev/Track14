@@ -1,6 +1,8 @@
 package uz.beko404.track14.presentation.app
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -16,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import uz.beko404.track14.presentation.navigation.Track14Destination
 import uz.beko404.track14.presentation.navigation.Track14NavGraph
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Track14App() {
     val navController = rememberNavController()
@@ -24,6 +27,13 @@ fun Track14App() {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(text = "Track14")
+                },
+            )
+        },
         bottomBar = {
             NavigationBar {
                 Track14Destination.bottomBarDestinations.forEach { destination ->
