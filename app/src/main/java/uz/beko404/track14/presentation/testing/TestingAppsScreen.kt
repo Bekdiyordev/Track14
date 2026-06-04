@@ -1,0 +1,14 @@
+package uz.beko404.track14.presentation.testing
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
+import uz.beko404.track14.presentation.common.PlaceholderScreen
+
+@Composable
+fun TestingAppsScreen(contentPadding: PaddingValues) {
+    PlaceholderScreen(
+        title = "Testlar",
+        subtitle = "Siz qo'shilgan ilovalar va 14 kunlik streak.",
+        contentPadding = contentPadding,
+    )
+}
