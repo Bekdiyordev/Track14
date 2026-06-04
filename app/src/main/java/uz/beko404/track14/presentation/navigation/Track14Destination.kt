@@ -1,6 +1,7 @@
 package uz.beko404.track14.presentation.navigation
 
 import androidx.annotation.DrawableRes
+import android.net.Uri
 import uz.beko404.track14.R
 
 sealed class Track14Destination(
@@ -31,6 +32,16 @@ sealed class Track14Destination(
         label = "Profil",
         iconRes = R.drawable.ic_nav_profile,
     )
+
+    data object AppDetail : Track14Destination(
+        route = "app_detail/{appId}",
+        label = "Ilova",
+        iconRes = R.drawable.ic_nav_home,
+    ) {
+        const val appIdArg = "appId"
+
+        fun createRoute(appId: String): String = "app_detail/${Uri.encode(appId)}"
+    }
 
     companion object {
         val bottomBarDestinations = listOf(

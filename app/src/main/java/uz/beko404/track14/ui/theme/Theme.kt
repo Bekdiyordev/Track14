@@ -1,6 +1,5 @@
 package uz.beko404.track14.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,36 +8,62 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+enum class Track14ThemeMode(val label: String) {
+    System("Tizim"),
+    Light("Yorug'"),
+    Dark("Qorong'i"),
+}
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = TrackGreen,
     onPrimary = Color.White,
+    primaryContainer = TrackGreenLight,
+    onPrimaryContainer = Color(0xFF062D24),
+    secondary = TrackBlue,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    secondaryContainer = TrackBlueLight,
+    onSecondaryContainer = Color(0xFF071F55),
+    tertiary = TrackAmber,
+    onTertiary = Color(0xFF2E2100),
+    error = TrackRed,
+    background = TrackBackgroundLight,
+    onBackground = TrackTextLight,
+    surface = TrackSurfaceLight,
+    onSurface = TrackTextLight,
+    surfaceVariant = TrackSurfaceVariantLight,
+    onSurfaceVariant = TrackTextMutedLight,
+    outline = Color(0xFF75847D),
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = TrackGreenLight,
+    onPrimary = Color(0xFF00382C),
+    primaryContainer = TrackGreenDark,
+    onPrimaryContainer = Color(0xFFC1F2E3),
+    secondary = TrackBlueLight,
+    onSecondary = Color(0xFF0A2F74),
+    secondaryContainer = Color(0xFF1647AA),
+    onSecondaryContainer = Color(0xFFDDE6FF),
+    tertiary = TrackAmber,
+    onTertiary = Color(0xFF2E2100),
+    error = Color(0xFFFFB4AB),
+    background = TrackBackgroundDark,
+    onBackground = TrackTextDark,
+    surface = TrackSurfaceDark,
+    onSurface = TrackTextDark,
+    surfaceVariant = TrackSurfaceVariantDark,
+    onSurfaceVariant = TrackTextMutedDark,
+    outline = Color(0xFF899891),
 )
 
 @Composable
 fun Track14Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -53,6 +78,6 @@ fun Track14Theme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
-        content = content
+        content = content,
     )
 }

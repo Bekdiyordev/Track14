@@ -1,7 +1,7 @@
 # Track14 Product and Implementation Plan
 
 Last updated: 2026-06-04
-Current step: `STEP-02` - Theme And UI Foundation not started
+Current step: `STEP-06` - Backend Integration blocked
 
 ## 1. Product Goal
 
@@ -509,7 +509,7 @@ Acceptance criteria:
 
 ### `STEP-02` Theme And UI Foundation
 
-Status: not started
+Status: completed
 
 Tasks:
 
@@ -531,7 +531,7 @@ Acceptance criteria:
 
 ### `STEP-03` Domain Models And Fake Repository
 
-Status: not started
+Status: completed
 
 Tasks:
 
@@ -553,7 +553,7 @@ Acceptance criteria:
 
 ### `STEP-04` Home And App Detail Flow
 
-Status: not started
+Status: completed
 
 Tasks:
 
@@ -571,7 +571,7 @@ Acceptance criteria:
 
 ### `STEP-05` Auth Gate
 
-Status: not started
+Status: completed
 
 Tasks:
 
@@ -588,7 +588,7 @@ Acceptance criteria:
 
 ### `STEP-06` Backend Integration
 
-Status: not started
+Status: blocked
 
 Tasks:
 
@@ -602,6 +602,13 @@ Acceptance criteria:
 - App list loads from backend.
 - Signed-in user can create membership.
 - My Apps loads only current user's apps.
+
+Blocker:
+
+- Real Firebase integration needs a Firebase Android app config file at `app/google-services.json` for package `uz.beko404.track14`.
+- Firebase Authentication email/password must be enabled in Firebase Console.
+- Cloud Firestore must be created and rules/indexes decided before replacing the fake repository with a real backend repository.
+- Current implementation added repository interfaces and a provider so the UI can switch from `FakeTrack14Repository` to a Firebase repository after config is available.
 
 ### `STEP-07` Add Own App Flow
 
