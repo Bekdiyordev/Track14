@@ -1,7 +1,7 @@
 # Track14 Product and Implementation Plan
 
 Last updated: 2026-06-05
-Current step: `STEP-07` - Add Own App Flow blocked
+Current step: `STEP-06` - Backend Integration in progress
 
 ## 1. Product Goal
 
@@ -588,7 +588,7 @@ Acceptance criteria:
 
 ### `STEP-06` Backend Integration
 
-Status: blocked
+Status: in progress
 
 Tasks:
 
@@ -605,10 +605,12 @@ Acceptance criteria:
 
 Blocker:
 
-- Real Firebase integration needs a Firebase Android app config file at `app/google-services.json` for package `uz.beko404.track14`.
+- Firebase Android app config file added at `app/google-services.json` for package `uz.beko404.track14`.
+- Google Services Gradle plugin and Firebase Auth, Firestore, and Storage dependencies are wired.
+- `:app:assembleDebug` passes and `processDebugGoogleServices` succeeds.
 - Firebase Authentication email/password must be enabled in Firebase Console.
 - Cloud Firestore must be created and rules/indexes decided before replacing the fake repository with a real backend repository.
-- Current implementation added repository interfaces and a provider so the UI can switch from `FakeTrack14Repository` to a Firebase repository after config is available.
+- Current implementation still uses `FakeTrack14Repository`; next backend task is implementing Firebase auth/session and Firestore repository.
 
 ### `STEP-07` Add Own App Flow
 
@@ -623,7 +625,7 @@ Tasks:
 - Avoid `QUERY_ALL_PACKAGES` unless Play policy declaration is approved. Done.
 - Validate Google Group and Play opt-in URLs. Done.
 - Enforce free 3-app limit. Done in repository.
-- Save app to backend. Blocked by `STEP-06` Firebase config.
+- Save app to backend. Blocked by Firebase repository implementation.
 
 Acceptance criteria:
 
@@ -631,7 +633,7 @@ Acceptance criteria:
 - App appears in My Apps. Passes with fake repository.
 - App appears on Home when active. Passes with fake repository.
 - Limit prevents more than 3 free apps. Passes with fake repository.
-- Backend persistence remains blocked until `app/google-services.json`, Firebase Auth, and Firestore are ready.
+- Backend persistence remains blocked until Firebase Auth, Firestore rules/indexes, and Firebase repository implementation are ready.
 
 Implementation notes:
 
@@ -757,7 +759,7 @@ Acceptance criteria:
 These can be filled later without blocking `STEP-01` through `STEP-04`:
 
 1. Track14 support URL or support email.
-2. Track14 Google Group URL.
+2. Track14 Google Group URL: `http://groups.google.com/g/track14-testers`.
 3. Track14 community URL.
 4. App branding details: final logo, launcher icon, and app description.
 5. Whether user profile should show public display name, email prefix, or anonymous tester ID.

@@ -65,7 +65,7 @@ object FakeTrack14Repository : Track14Repository {
             ownerId = currentUser.id,
             name = "Track14",
             packageName = "uz.beko404.track14",
-            googleGroupUrl = "https://groups.google.com/g/track14-testers",
+            googleGroupUrl = TRACK14_GOOGLE_GROUP_URL,
             playOptInUrl = "https://play.google.com/apps/testing/uz.beko404.track14",
             playInstallUrl = "https://play.google.com/store/apps/details?id=uz.beko404.track14",
             status = TrackAppStatus.Active,
@@ -193,8 +193,8 @@ object FakeTrack14Repository : Track14Repository {
             return AddOwnerAppResult.Failure("Ilova nomi va package name majburiy.")
         }
 
-        if (!googleGroupUrl.startsWith("https://groups.google.", ignoreCase = true)) {
-            return AddOwnerAppResult.Failure("Google Group linki https://groups.google... bilan boshlanishi kerak.")
+        if (!isGoogleGroupUrl(googleGroupUrl)) {
+            return AddOwnerAppResult.Failure("Google Group linki http://groups.google... yoki https://groups.google... bilan boshlanishi kerak.")
         }
 
         if (!playOptInUrl.startsWith("https://play.google.com/apps/testing/", ignoreCase = true)) {
@@ -238,6 +238,12 @@ object FakeTrack14Repository : Track14Repository {
         return "$baseId-$suffix"
     }
 
+    private fun isGoogleGroupUrl(value: String): Boolean {
+        val normalized = value.trim().lowercase()
+        return normalized.startsWith("http://groups.google.") ||
+            normalized.startsWith("https://groups.google.")
+    }
+
     private fun dailyTest(
         id: String,
         membershipId: String,
@@ -256,4 +262,6 @@ object FakeTrack14Repository : Track14Repository {
         elapsedSeconds = elapsedSeconds,
         pointsApplied = pointsApplied,
     )
+
+    private const val TRACK14_GOOGLE_GROUP_URL = "http://groups.google.com/g/track14-testers"
 }

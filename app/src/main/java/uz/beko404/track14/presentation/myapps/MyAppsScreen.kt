@@ -243,7 +243,7 @@ private fun AddOwnerAppCard(
                 isError = googleGroupUrl.isNotBlank() && !isGoogleGroupUrl(googleGroupUrl),
                 label = { Text(text = "Google Group URL") },
                 supportingText = {
-                    Text(text = "Masalan: https://groups.google.com/g/track14-testers")
+                    Text(text = "Masalan: http://groups.google.com/g/track14-testers")
                 },
             )
             OutlinedTextField(
@@ -498,7 +498,8 @@ private fun loadLaunchableInstalledApps(context: Context): List<InstalledAppCand
 
 private fun isGoogleGroupUrl(value: String): Boolean {
     val normalized = value.trim().lowercase()
-    return normalized.startsWith("https://groups.google.")
+    return normalized.startsWith("http://groups.google.") ||
+        normalized.startsWith("https://groups.google.")
 }
 
 private fun isPlayOptInUrl(value: String): Boolean {
