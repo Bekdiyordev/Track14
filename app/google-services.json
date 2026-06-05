@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "282255323635",
+    "project_id": "track14-c2822",
+    "storage_bucket": "track14-c2822.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282255323635:android:f01721590f33cf6576e286",
+        "android_client_info": {
+          "package_name": "uz.beko404.track14"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoUSjyeyCwfj5SY9V8lndXJefztcm0H8E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
