@@ -1,5 +1,10 @@
 package uz.beko404.track14.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import uz.beko404.track14.domain.model.AddOwnerAppRequest
+import uz.beko404.track14.domain.model.AddOwnerAppResult
 import uz.beko404.track14.domain.model.DailyTest
 import uz.beko404.track14.domain.model.DailyTestStatus
 import uz.beko404.track14.domain.model.JoinedTestSnapshot
@@ -25,7 +30,8 @@ object FakeTrack14Repository : Track14Repository {
         timezoneId = "Asia/Samarkand",
     )
 
-    private val apps = listOf(
+    private var apps by mutableStateOf(
+        listOf(
         TrackApp(
             id = "app-market-helper",
             ownerId = "user-owner-02",
@@ -67,6 +73,7 @@ object FakeTrack14Repository : Track14Repository {
             requiredTesterCount = 12,
             rankingScore = 52,
             ownerScore = currentUser.ownerScore,
+        ),
         ),
     )
 
@@ -132,34 +139,104 @@ object FakeTrack14Repository : Track14Repository {
         ),
     )
 
-    override val snapshot = Track14Snapshot(
-        currentUser = currentUser,
-        rankedApps = apps.sortedByDescending { it.rankingScore },
-        joinedTests = memberships.mapNotNull { membership ->
-            val app = apps.firstOrNull { it.id == membership.appId } ?: return@mapNotNull null
-            JoinedTestSnapshot(
-                app = app,
-                membership = membership,
-                dailyTests = dailyTestsByMembershipId[membership.id].orEmpty(),
-            )
-        },
-        ownerApps = apps.filter { it.ownerId == currentUser.id },
-        ownerTesterSnapshots = ownerTesterSnapshots,
-        scoreEvents = listOf(
-            ScoreEvent(
-                id = "score-01",
-                userId = currentUser.id,
-                sourceType = "dailyTest",
-                sourceId = "daily-market-01",
-                points = 2,
-                reason = "Valid daily test",
-                createdAt = "2026-06-01T09:00:00Z",
+    override val snapshot: Track14Snapshot
+        get() = Track14Snapshot(
+            currentUser = currentUser,
+            rankedApps = apps.sortedByDescending { it.rankingScore },
+            joinedTests = memberships.mapNotNull { membership ->
+                val app = apps.firstOrNull { it.id == membership.appId } ?: return@mapNotNull null
+                JoinedTestSnapshot(
+                    app = app,
+                    membership = membership,
+                    dailyTests = dailyTestsByMembershipId[membership.id].orEmpty(),
+                )
+            },
+            ownerApps = apps.filter { it.ownerId == currentUser.id },
+            ownerTesterSnapshots = ownerTesterSnapshots,
+            scoreEvents = listOf(
+                ScoreEvent(
+                    id = "score-01",
+                    userId = currentUser.id,
+                    sourceType = "dailyTest",
+                    sourceId = "daily-market-01",
+                    points = 2,
+                    reason = "Valid daily test",
+                    createdAt = "2026-06-01T09:00:00Z",
+                ),
             ),
-        ),
-    )
+        )
 
     override fun getAppById(appId: String): TrackApp? =
         apps.firstOrNull { it.id == appId }
+
+    override fun addOwnerApp(request: AddOwnerAppRequest): AddOwnerAppResult {
+        val ownerApps = apps.filter { it.ownerId == currentUser.id }
+        if (ownerApps.size >= currentUser.freeAppLimit) {
+            return AddOwnerAppResult.Failure("Bepul limit tugagan: ${currentUser.freeAppLimit} ta ilova.")
+        }
+
+        val packageName = request.packageName.trim()
+        if (apps.any { it.packageName.equals(packageName, ignoreCase = true) }) {
+            return AddOwnerAppResult.Failure("Bu package name Track14 ro'yxatida bor.")
+        }
+
+        val appName = request.name.trim()
+        val googleGroupUrl = request.googleGroupUrl.trim()
+        val playOptInUrl = request.playOptInUrl.trim()
+        val playInstallUrl = request.playInstallUrl.trim()
+            .ifBlank { "https://play.google.com/store/apps/details?id=$packageName" }
+        val iconUrl = request.iconUrl
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+
+        if (appName.isBlank() || packageName.isBlank()) {
+            return AddOwnerAppResult.Failure("Ilova nomi va package name majburiy.")
+        }
+
+        if (!googleGroupUrl.startsWith("https://groups.google.", ignoreCase = true)) {
+            return AddOwnerAppResult.Failure("Google Group linki https://groups.google... bilan boshlanishi kerak.")
+        }
+
+        if (!playOptInUrl.startsWith("https://play.google.com/apps/testing/", ignoreCase = true)) {
+            return AddOwnerAppResult.Failure("Play opt-in linki https://play.google.com/apps/testing/... bo'lishi kerak.")
+        }
+
+        val newApp = TrackApp(
+            id = nextAppId(packageName),
+            ownerId = currentUser.id,
+            name = appName,
+            packageName = packageName,
+            googleGroupUrl = googleGroupUrl,
+            playOptInUrl = playOptInUrl,
+            playInstallUrl = playInstallUrl,
+            status = TrackAppStatus.Active,
+            testerCount = 0,
+            requiredTesterCount = 12,
+            rankingScore = currentUser.ownerScore + 12,
+            ownerScore = currentUser.ownerScore,
+            iconUrl = iconUrl,
+        )
+
+        apps = apps + newApp
+        return AddOwnerAppResult.Success(newApp)
+    }
+
+    private fun nextAppId(packageName: String): String {
+        val baseId = "app-" + packageName
+            .lowercase()
+            .replace(Regex("[^a-z0-9]+"), "-")
+            .trim('-')
+
+        if (apps.none { it.id == baseId }) {
+            return baseId
+        }
+
+        var suffix = 2
+        while (apps.any { it.id == "$baseId-$suffix" }) {
+            suffix += 1
+        }
+        return "$baseId-$suffix"
+    }
 
     private fun dailyTest(
         id: String,

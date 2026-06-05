@@ -1,7 +1,7 @@
 # Track14 Product and Implementation Plan
 
-Last updated: 2026-06-04
-Current step: `STEP-06` - Backend Integration blocked
+Last updated: 2026-06-05
+Current step: `STEP-07` - Add Own App Flow blocked
 
 ## 1. Product Goal
 
@@ -612,25 +612,32 @@ Blocker:
 
 ### `STEP-07` Add Own App Flow
 
-Status: not started
+Status: blocked
 
 Tasks:
 
-- Add installed app picker.
-- List launchable user-facing installed apps.
-- Extract app label, package name, and icon with `PackageManager` when possible.
-- Add manual fallback for package/name/icon.
-- Avoid `QUERY_ALL_PACKAGES` unless Play policy declaration is approved.
-- Validate Google Group and Play opt-in URLs.
-- Enforce free 3-app limit.
-- Save app to backend.
+- Add installed app picker. Done locally.
+- List launchable user-facing installed apps. Done locally with launcher intent package visibility.
+- Extract app label, package name, and icon with `PackageManager` when possible. Done locally for label/package and icon availability detection.
+- Add manual fallback for package/name/icon. Done locally for name/package and optional icon URL; installed-app icon persistence needs backend storage.
+- Avoid `QUERY_ALL_PACKAGES` unless Play policy declaration is approved. Done.
+- Validate Google Group and Play opt-in URLs. Done.
+- Enforce free 3-app limit. Done in repository.
+- Save app to backend. Blocked by `STEP-06` Firebase config.
 
 Acceptance criteria:
 
-- User can add an app.
-- App appears in My Apps.
-- App appears on Home when active.
-- Limit prevents more than 3 free apps.
+- User can add an app. Passes with fake repository.
+- App appears in My Apps. Passes with fake repository.
+- App appears on Home when active. Passes with fake repository.
+- Limit prevents more than 3 free apps. Passes with fake repository.
+- Backend persistence remains blocked until `app/google-services.json`, Firebase Auth, and Firestore are ready.
+
+Implementation notes:
+
+- `MyAppsScreen` now includes installed-app selection, manual fields, URL validation, free limit feedback, and save action.
+- `FakeTrack14Repository` now supports mutable add-app persistence for UI development.
+- `AndroidManifest.xml` declares launcher intent package visibility through `<queries>` and does not use `QUERY_ALL_PACKAGES`.
 
 ### `STEP-08` Join Test Flow
 

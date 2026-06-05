@@ -13,6 +13,7 @@ data class TrackApp(
     val requiredTesterCount: Int,
     val rankingScore: Int,
     val ownerScore: Int,
+    val iconUrl: String? = null,
 )
 
 enum class TrackAppStatus {
