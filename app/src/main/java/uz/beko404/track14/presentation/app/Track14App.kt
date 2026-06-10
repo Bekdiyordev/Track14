@@ -10,14 +10,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import uz.beko404.track14.domain.model.AuthSession
+import uz.beko404.track14.data.FirebaseTrack14Repository
 import uz.beko404.track14.presentation.auth.AuthUiState
 import uz.beko404.track14.presentation.navigation.Track14Destination
 import uz.beko404.track14.presentation.navigation.Track14NavGraph
@@ -28,15 +26,8 @@ fun Track14App() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    var signedInEmail by rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
     val authState = AuthUiState(
-        session = signedInEmail?.let { email ->
-            AuthSession(
-                userId = "auth-${email.hashCode()}",
-                email = email,
-                displayName = email.substringBefore('@'),
-            )
-        },
+        session = FirebaseTrack14Repository.authSession,
     )
 
     Scaffold(
@@ -84,11 +75,11 @@ fun Track14App() {
             navController = navController,
             contentPadding = innerPadding,
             authState = authState,
-            onSignIn = { email, _ ->
-                signedInEmail = email
+            onSignIn = { email, password ->
+                FirebaseTrack14Repository.signIn(email, password)
             },
             onSignOut = {
-                signedInEmail = null
+                FirebaseTrack14Repository.signOut()
             },
         )
     }

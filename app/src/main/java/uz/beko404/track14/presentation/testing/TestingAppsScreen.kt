@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import uz.beko404.track14.data.Track14RepositoryProvider
+import uz.beko404.track14.domain.model.TestMembershipStatus
 import uz.beko404.track14.presentation.auth.AuthPromptCard
 import uz.beko404.track14.presentation.auth.AuthUiState
 import uz.beko404.track14.presentation.common.AppCard
@@ -28,6 +29,7 @@ fun TestingAppsScreen(
     onSignIn: (email: String, password: String) -> Unit,
 ) {
     val joinedTests = Track14RepositoryProvider.current.snapshot.joinedTests
+        .filter { it.membership.status != TestMembershipStatus.Pending }
 
     PlaceholderScreen(
         title = "Testlar",

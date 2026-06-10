@@ -15,6 +15,7 @@ fun TrackAppStatus.label(): String =
 
 fun TestMembershipStatus.label(): String =
     when (this) {
+        TestMembershipStatus.Pending -> "Jarayonda"
         TestMembershipStatus.Active -> "Faol"
         TestMembershipStatus.Finished -> "Tugagan"
         TestMembershipStatus.Rejected -> "Rad etilgan"

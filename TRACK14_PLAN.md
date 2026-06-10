@@ -1,7 +1,7 @@
 # Track14 Product and Implementation Plan
 
 Last updated: 2026-06-05
-Current step: `STEP-06` - Backend Integration in progress
+Current step: `STEP-09` - Daily Test And 14-Day Streak not started
 
 ## 1. Product Goal
 
@@ -588,7 +588,7 @@ Acceptance criteria:
 
 ### `STEP-06` Backend Integration
 
-Status: in progress
+Status: completed
 
 Tasks:
 
@@ -603,18 +603,24 @@ Acceptance criteria:
 - Signed-in user can create membership.
 - My Apps loads only current user's apps.
 
-Blocker:
+Implementation notes:
 
 - Firebase Android app config file added at `app/google-services.json` for package `uz.beko404.track14`.
 - Google Services Gradle plugin and Firebase Auth, Firestore, and Storage dependencies are wired.
 - `:app:assembleDebug` passes and `processDebugGoogleServices` succeeds.
-- Firebase Authentication email/password must be enabled in Firebase Console.
-- Cloud Firestore must be created and rules/indexes decided before replacing the fake repository with a real backend repository.
-- Current implementation still uses `FakeTrack14Repository`; next backend task is implementing Firebase auth/session and Firestore repository.
+- Firebase-backed repository is now wired through `Track14RepositoryProvider`.
+- Firebase Auth session is connected to the app sign-in/sign-out flow.
+- Home app list listens to Firestore `apps`.
+- My Apps listens to current user-owned Firestore apps.
+- Add Own App writes app records to Firestore `apps`.
+- Joined memberships are read from Firestore `memberships` for the signed-in tester.
+- Signed-in users can create membership records through the join flow.
+- Firebase Authentication email/password must be enabled in Firebase Console for runtime sign-in.
+- Cloud Firestore must be created and rules must allow the MVP reads/writes for runtime verification.
 
 ### `STEP-07` Add Own App Flow
 
-Status: blocked
+Status: completed
 
 Tasks:
 
@@ -625,7 +631,7 @@ Tasks:
 - Avoid `QUERY_ALL_PACKAGES` unless Play policy declaration is approved. Done.
 - Validate Google Group and Play opt-in URLs. Done.
 - Enforce free 3-app limit. Done in repository.
-- Save app to backend. Blocked by Firebase repository implementation.
+- Save app to backend. Done with Firestore `apps`.
 
 Acceptance criteria:
 
@@ -633,7 +639,7 @@ Acceptance criteria:
 - App appears in My Apps. Passes with fake repository.
 - App appears on Home when active. Passes with fake repository.
 - Limit prevents more than 3 free apps. Passes with fake repository.
-- Backend persistence remains blocked until Firebase Auth, Firestore rules/indexes, and Firebase repository implementation are ready.
+- Backend persistence is implemented through Firebase Auth and Firestore. Runtime verification still depends on Firebase Console Auth/Firestore rules.
 
 Implementation notes:
 
@@ -643,23 +649,27 @@ Implementation notes:
 
 ### `STEP-08` Join Test Flow
 
-Status: not started
+Status: completed
 
 Tasks:
 
-- Implement Google Group link step.
-- Implement Play opt-in link step.
-- Mark Google Group step complete after the link is opened.
-- Show retry/help info if Play install is unavailable.
-- Create membership record.
-- Show joined app in Testing Apps.
+- Implement Google Group link step. Done.
+- Implement Play opt-in link step. Done.
+- Mark Google Group step complete after the link is opened. Done.
+- Show retry/help info if Play install is unavailable. Done.
+- Create membership record. Done with Firestore `memberships`.
+- Show joined app in Testing Apps. Done through current user membership listener.
 
 Acceptance criteria:
 
-- User can join another user's app.
-- Joined app appears in Testing Apps.
-- Duplicate join is prevented.
-- User cannot join own app for points.
+- User can join another user's app. Implemented.
+- Joined app appears in Testing Apps. Implemented.
+- Duplicate join is prevented. Implemented.
+- User cannot join own app for points. Implemented.
+- Google Group, Play opt-in, and install/open progress are persisted on membership records.
+- Pending membership records are used during link progress and become active after install/open.
+- Testing Apps hides pending memberships and shows active joined tests.
+- `:app:assembleDebug` passes after the join flow changes.
 
 ### `STEP-09` Daily Test And 14-Day Streak
 

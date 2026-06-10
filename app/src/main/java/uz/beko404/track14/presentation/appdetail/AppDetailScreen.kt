@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import uz.beko404.track14.data.Track14RepositoryProvider
+import uz.beko404.track14.domain.model.JoinAppResult
 import uz.beko404.track14.domain.model.TrackApp
 import uz.beko404.track14.presentation.common.AppCard
 import uz.beko404.track14.presentation.common.EmptyState
@@ -43,7 +44,9 @@ fun AppDetailScreen(
     onSignIn: (email: String, password: String) -> Unit,
     onBackClick: () -> Unit,
 ) {
-    val app = Track14RepositoryProvider.current.getAppById(appId)
+    val repository = Track14RepositoryProvider.current
+    val snapshot = repository.snapshot
+    val app = repository.getAppById(appId)
 
     if (app == null) {
         AppMissingState(
@@ -55,15 +58,18 @@ fun AppDetailScreen(
 
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
-    fun openExternalLink(url: String) {
+    val membership = snapshot.joinedTests.firstOrNull { it.app.id == app.id }?.membership
+    fun openExternalLink(url: String): Boolean {
         if (!authState.isSignedIn) {
             Toast.makeText(context, "Avval email orqali kiring.", Toast.LENGTH_SHORT).show()
-            return
+            return false
         }
-        runCatching {
+        return runCatching {
             uriHandler.openUri(url)
-        }.onFailure {
+            true
+        }.getOrElse {
             Toast.makeText(context, "Link ochilmadi. Qayta urinib ko'ring.", Toast.LENGTH_SHORT).show()
+            false
         }
     }
 
@@ -115,21 +121,43 @@ fun AppDetailScreen(
             title = "Google Groupga qo'shiling",
             description = "Play closed test ko'rinishi uchun avval testerlar Google Groupiga qo'shiling.",
             actionText = "Google Groupni ochish",
-            onActionClick = { openExternalLink(app.googleGroupUrl) },
+            completed = membership?.googleGroupOpened == true,
+            onActionClick = {
+                if (openExternalLink(app.googleGroupUrl)) {
+                    repository.markGoogleGroupOpened(app.id)
+                }
+            },
         )
         JoinStepCard(
             stepNumber = 2,
             title = "Play test opt-in sahifasini oching",
             description = "Google hisobingiz Groupga qo'shilgan bo'lsa, Play test sahifasida tester sifatida opt-in qilasiz.",
             actionText = "Play testni ochish",
-            onActionClick = { openExternalLink(app.playOptInUrl) },
+            completed = membership?.playOptInOpened == true,
+            onActionClick = {
+                if (openExternalLink(app.playOptInUrl)) {
+                    repository.markPlayOptInOpened(app.id)
+                }
+            },
         )
         JoinStepCard(
             stepNumber = 3,
             title = "Ilovani install yoki open qiling",
             description = "Agar Play link ishlamasa, Google Groupga qayta kirib, Play test linkini yana oching.",
             actionText = "Install yoki ochish",
-            onActionClick = { openExternalLink(app.playInstallUrl) },
+            completed = membership?.installOpened == true,
+            onActionClick = {
+                if (openExternalLink(app.playInstallUrl)) {
+                    when (val result = repository.joinApp(app.id)) {
+                        is JoinAppResult.Success -> {
+                            Toast.makeText(context, "Test ro'yxatiga qo'shildingiz.", Toast.LENGTH_SHORT).show()
+                        }
+                        is JoinAppResult.Failure -> {
+                            Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            },
         )
 
         Surface(
@@ -140,7 +168,7 @@ fun AppDetailScreen(
         ) {
             Text(
                 modifier = Modifier.padding(16.dp),
-                text = "Eslatma: MVP Google Group yoki Play Console a'zoligini avtomatik tasdiqlamaydi. Linklar ochilgandan keyin joined record keyingi stepda yaratiladi.",
+                text = "Eslatma: MVP Google Group yoki Play Console a'zoligini avtomatik tasdiqlamaydi. Install/open bosqichi ochilgandan keyin Track14 joined record yaratadi.",
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -198,6 +226,7 @@ private fun JoinStepCard(
     title: String,
     description: String,
     actionText: String,
+    completed: Boolean,
     onActionClick: () -> Unit,
 ) {
     Card(
@@ -212,7 +241,7 @@ private fun JoinStepCard(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                text = "$stepNumber-bosqich",
+                text = if (completed) "$stepNumber-bosqich • bajarildi" else "$stepNumber-bosqich",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,

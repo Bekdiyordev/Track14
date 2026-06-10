@@ -8,6 +8,7 @@ import uz.beko404.track14.domain.model.AddOwnerAppResult
 import uz.beko404.track14.domain.model.DailyTest
 import uz.beko404.track14.domain.model.DailyTestStatus
 import uz.beko404.track14.domain.model.JoinedTestSnapshot
+import uz.beko404.track14.domain.model.JoinAppResult
 import uz.beko404.track14.domain.model.OwnerTesterSnapshot
 import uz.beko404.track14.domain.model.ScoreEvent
 import uz.beko404.track14.domain.model.TestMembership
@@ -77,7 +78,7 @@ object FakeTrack14Repository : Track14Repository {
         ),
     )
 
-    private val memberships = listOf(
+    private var memberships by mutableStateOf(listOf(
         TestMembership(
             id = "membership-market-helper",
             appId = "app-market-helper",
@@ -100,7 +101,7 @@ object FakeTrack14Repository : Track14Repository {
             missedDaysCount = 0,
             pointsDelta = 4,
         ),
-    )
+    ))
 
     private val dailyTestsByMembershipId = mapOf(
         "membership-market-helper" to listOf(
@@ -219,6 +220,84 @@ object FakeTrack14Repository : Track14Repository {
 
         apps = apps + newApp
         return AddOwnerAppResult.Success(newApp)
+    }
+
+    override fun markGoogleGroupOpened(appId: String): JoinAppResult =
+        upsertJoinProgress(
+            appId = appId,
+            googleGroupOpened = true,
+            playOptInOpened = false,
+            installOpened = false,
+            activate = false,
+        )
+
+    override fun markPlayOptInOpened(appId: String): JoinAppResult =
+        upsertJoinProgress(
+            appId = appId,
+            googleGroupOpened = true,
+            playOptInOpened = true,
+            installOpened = false,
+            activate = false,
+        )
+
+    override fun joinApp(appId: String): JoinAppResult {
+        return upsertJoinProgress(
+            appId = appId,
+            googleGroupOpened = true,
+            playOptInOpened = true,
+            installOpened = true,
+            activate = true,
+        )
+    }
+
+    private fun upsertJoinProgress(
+        appId: String,
+        googleGroupOpened: Boolean,
+        playOptInOpened: Boolean,
+        installOpened: Boolean,
+        activate: Boolean,
+    ): JoinAppResult {
+        val app = apps.firstOrNull { it.id == appId }
+            ?: return JoinAppResult.Failure("Ilova topilmadi.")
+        if (app.ownerId == currentUser.id) {
+            return JoinAppResult.Failure("O'z ilovangizga tester sifatida qo'shila olmaysiz.")
+        }
+        val existing = memberships.firstOrNull { it.appId == appId && it.testerId == currentUser.id }
+        if (activate && existing?.status == TestMembershipStatus.Active) {
+            return JoinAppResult.Failure("Bu testga allaqachon qo'shilgansiz.")
+        }
+
+        val membership = existing?.copy(
+            status = if (activate) TestMembershipStatus.Active else existing.status,
+            googleGroupOpened = existing.googleGroupOpened || googleGroupOpened,
+            playOptInOpened = existing.playOptInOpened || playOptInOpened,
+            installOpened = existing.installOpened || installOpened,
+        ) ?: TestMembership(
+            id = "membership-${app.id}-${currentUser.id}",
+            appId = app.id,
+            testerId = currentUser.id,
+            ownerId = app.ownerId,
+            status = if (activate) TestMembershipStatus.Active else TestMembershipStatus.Pending,
+            joinedDate = "2026-06-10",
+            completedDaysCount = 0,
+            missedDaysCount = 0,
+            pointsDelta = 0,
+            googleGroupOpened = googleGroupOpened,
+            playOptInOpened = playOptInOpened,
+            installOpened = installOpened,
+        )
+
+        memberships = memberships.filterNot { it.id == membership.id } + membership
+        if (activate && existing?.status != TestMembershipStatus.Active) {
+            apps = apps.map { existingApp ->
+                if (existingApp.id == app.id) {
+                    existingApp.copy(testerCount = existingApp.testerCount + 1)
+                } else {
+                    existingApp
+                }
+            }
+        }
+        return JoinAppResult.Success(membership)
     }
 
     private fun nextAppId(packageName: String): String {
