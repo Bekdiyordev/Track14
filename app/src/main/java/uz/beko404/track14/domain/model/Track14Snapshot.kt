@@ -16,6 +16,9 @@ data class JoinedTestSnapshot(
 )
 
 data class OwnerTesterSnapshot(
+    val appId: String,
+    val appName: String,
+    val membershipId: String,
     val testerName: String,
     val membershipStatus: TestMembershipStatus,
     val streak: List<DailyTestStatus>,

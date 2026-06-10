@@ -13,9 +13,11 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
@@ -30,6 +32,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import uz.beko404.track14.R
 import uz.beko404.track14.data.Track14RepositoryProvider
 import uz.beko404.track14.domain.model.DailyTestResult
+import uz.beko404.track14.domain.model.JoinAppResult
 import uz.beko404.track14.domain.model.TestMembershipStatus
 import uz.beko404.track14.presentation.auth.AuthPromptCard
 import uz.beko404.track14.presentation.auth.AuthUiState
@@ -49,7 +52,7 @@ fun TestingAppsScreen(
 ) {
     val repository = Track14RepositoryProvider.current
     val joinedTests = repository.snapshot.joinedTests
-        .filter { it.membership.status != TestMembershipStatus.Pending }
+        .filter { it.membership.status == TestMembershipStatus.Active }
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -109,19 +112,35 @@ fun TestingAppsScreen(
                         fontWeight = FontWeight.Medium,
                     )
                     StreakGrid(states = joinedTest.dailyTests.toStreakDayStates())
-                    PrimaryActionButton(
-                        text = "Testni boshlash",
-                        onClick = {
-                            startDailyTestFlow(
-                                context = context,
-                                packageName = joinedTest.app.packageName,
-                                appName = joinedTest.app.name,
-                                onStartDailyTest = {
-                                    repository.startDailyTest(joinedTest.membership.id)
-                                },
-                            )
-                        },
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        PrimaryActionButton(
+                            text = "Testni boshlash",
+                            onClick = {
+                                startDailyTestFlow(
+                                    context = context,
+                                    packageName = joinedTest.app.packageName,
+                                    appName = joinedTest.app.name,
+                                    onStartDailyTest = {
+                                        repository.startDailyTest(joinedTest.membership.id)
+                                    },
+                                )
+                            },
+                        )
+                        TextButton(
+                            onClick = {
+                                when (val result = repository.leaveJoinedTest(joinedTest.membership.id)) {
+                                    is JoinAppResult.Success -> {
+                                        Toast.makeText(context, "Testdan chiqdingiz.", Toast.LENGTH_SHORT).show()
+                                    }
+                                    is JoinAppResult.Failure -> {
+                                        Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                        ) {
+                            Text(text = "Chiqish")
+                        }
+                    }
                 }
             }
         }

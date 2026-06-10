@@ -13,7 +13,6 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -26,6 +25,7 @@ import uz.beko404.track14.domain.model.DailyTestStatus
 import uz.beko404.track14.domain.model.JoinedTestSnapshot
 import uz.beko404.track14.domain.model.JoinAppResult
 import uz.beko404.track14.domain.model.OwnerTesterSnapshot
+import uz.beko404.track14.domain.model.ScoreEvent
 import uz.beko404.track14.domain.model.TestMembership
 import uz.beko404.track14.domain.model.TestMembershipStatus
 import uz.beko404.track14.domain.model.ThemeMode
@@ -34,20 +34,28 @@ import uz.beko404.track14.domain.model.TrackApp
 import uz.beko404.track14.domain.model.TrackAppStatus
 import uz.beko404.track14.domain.model.UserProfile
 import uz.beko404.track14.domain.repository.Track14Repository
+import uz.beko404.track14.domain.rules.ScoringRules
+import uz.beko404.track14.domain.rules.StreakRules
 
 object FirebaseTrack14Repository : Track14Repository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
     private var apps by mutableStateOf<List<TrackApp>>(emptyList())
-    private var memberships by mutableStateOf<List<TestMembership>>(emptyList())
+    private var testerMemberships by mutableStateOf<List<TestMembership>>(emptyList())
+    private var ownerMemberships by mutableStateOf<List<TestMembership>>(emptyList())
     private var dailyTests by mutableStateOf<List<DailyTest>>(emptyList())
+    private var ownerDailyTests by mutableStateOf<List<DailyTest>>(emptyList())
+    private var scoreEvents by mutableStateOf<List<ScoreEvent>>(emptyList())
     private var currentUserProfile by mutableStateOf<UserProfile?>(null)
     private var authSessionState by mutableStateOf(auth.currentUser?.toAuthSession())
 
     private var appsListener: ListenerRegistration? = null
-    private var membershipsListener: ListenerRegistration? = null
+    private var testerMembershipsListener: ListenerRegistration? = null
+    private var ownerMembershipsListener: ListenerRegistration? = null
     private var dailyTestsListener: ListenerRegistration? = null
+    private var ownerDailyTestsListener: ListenerRegistration? = null
+    private var scoreEventsListener: ListenerRegistration? = null
     private var userListener: ListenerRegistration? = null
 
     val authSession: AuthSession?
@@ -59,8 +67,11 @@ object FirebaseTrack14Repository : Track14Repository {
             authSessionState = user?.toAuthSession()
             currentUserProfile = user?.toDefaultUserProfile()
             listenToUser(user?.uid)
-            listenToMemberships(user?.uid)
+            listenToTesterMemberships(user?.uid)
+            listenToOwnerMemberships(user?.uid)
             listenToDailyTests(user?.uid)
+            listenToOwnerDailyTests(user?.uid)
+            listenToScoreEvents(user?.uid)
             user?.let(::ensureUserDocument)
         }
         listenToApps()
@@ -72,22 +83,37 @@ object FirebaseTrack14Repository : Track14Repository {
             return Track14Snapshot(
                 currentUser = currentUser,
                 rankedApps = apps.sortedByDescending { it.rankingScore },
-                joinedTests = memberships.mapNotNull { membership ->
+                joinedTests = testerMemberships.mapNotNull { membership ->
                     val app = apps.firstOrNull { it.id == membership.appId } ?: return@mapNotNull null
                     JoinedTestSnapshot(
                         app = app,
                         membership = membership,
                         dailyTests = buildStreakDailyTests(
                             membership = membership,
-                            existingTests = dailyTests
+                            existingTests = ownerDailyTests
                                 .filter { it.membershipId == membership.id }
                                 .sortedBy { it.testDate },
                         ),
                     )
                 },
                 ownerApps = apps.filter { it.ownerId == currentUser.id },
-                ownerTesterSnapshots = emptyList<OwnerTesterSnapshot>(),
-                scoreEvents = emptyList(),
+                ownerTesterSnapshots = ownerMemberships.mapNotNull { membership ->
+                    val app = apps.firstOrNull { it.id == membership.appId } ?: return@mapNotNull null
+                    OwnerTesterSnapshot(
+                        appId = app.id,
+                        appName = app.name,
+                        membershipId = membership.id,
+                        testerName = testerLabel(membership.testerId),
+                        membershipStatus = membership.status,
+                        streak = buildStreakDailyTests(
+                            membership = membership,
+                            existingTests = dailyTests
+                                .filter { it.membershipId == membership.id }
+                                .sortedBy { it.testDate },
+                        ).map { it.status },
+                    )
+                },
+                scoreEvents = scoreEvents,
             )
         }
 
@@ -141,7 +167,11 @@ object FirebaseTrack14Repository : Track14Repository {
             status = TrackAppStatus.Active,
             testerCount = 0,
             requiredTesterCount = 12,
-            rankingScore = owner.ownerScore + 12,
+            rankingScore = ScoringRules.rankingScore(
+                ownerScore = owner.ownerScore,
+                testerCount = 0,
+                requiredTesterCount = 12,
+            ),
             ownerScore = owner.ownerScore,
             iconUrl = iconUrl,
         )
@@ -198,7 +228,7 @@ object FirebaseTrack14Repository : Track14Repository {
             return JoinAppResult.Failure("O'z ilovangizga tester sifatida qo'shila olmaysiz.")
         }
 
-        val existing = memberships.firstOrNull { it.appId == appId && it.testerId == tester.id }
+        val existing = testerMemberships.firstOrNull { it.appId == appId && it.testerId == tester.id }
         if (activate && existing?.status == TestMembershipStatus.Active) {
             return JoinAppResult.Failure("Bu testga allaqachon qo'shilgansiz.")
         }
@@ -224,7 +254,7 @@ object FirebaseTrack14Repository : Track14Repository {
             installOpened = installOpened,
         )
 
-        memberships = memberships.filterNot { it.id == membership.id } + membership
+        testerMemberships = testerMemberships.filterNot { it.id == membership.id } + membership
         if (activate && existing?.status != TestMembershipStatus.Active) {
             apps = apps.map { existingApp ->
                 if (existingApp.id == appId) {
@@ -248,7 +278,7 @@ object FirebaseTrack14Repository : Track14Repository {
     }
 
     override fun startDailyTest(membershipId: String): DailyTestResult {
-        val membership = memberships.firstOrNull { it.id == membershipId && it.status == TestMembershipStatus.Active }
+        val membership = testerMemberships.firstOrNull { it.id == membershipId && it.status == TestMembershipStatus.Active }
             ?: return DailyTestResult.Failure("Faol test topilmadi.")
         val today = DATE_FORMAT.format(Date())
         val existing = dailyTests.firstOrNull { it.membershipId == membershipId && it.testDate == today }
@@ -265,6 +295,7 @@ object FirebaseTrack14Repository : Track14Repository {
             id = "daily-$membershipId-$today",
             membershipId = membership.id,
             appId = membership.appId,
+            ownerId = membership.ownerId,
             testerId = membership.testerId,
             testDate = today,
             status = DailyTestStatus.Pending,
@@ -313,7 +344,94 @@ object FirebaseTrack14Repository : Track14Repository {
                             "updatedAt" to FieldValue.serverTimestamp(),
                         ),
                     )
+                applyScoreEvent(
+                    userId = completed.testerId,
+                    sourceType = "dailyTest",
+                    sourceId = completed.id,
+                    points = ScoringRules.DAILY_TEST_POINTS,
+                    reason = "Valid daily test",
+                )
             }
+
+        applyMissedDayScoreEvents()
+    }
+
+    override fun leaveJoinedTest(membershipId: String): JoinAppResult {
+        val membership = testerMemberships.firstOrNull { it.id == membershipId && it.status == TestMembershipStatus.Active }
+            ?: return JoinAppResult.Failure("Faol test topilmadi.")
+
+        val left = membership.copy(
+            status = TestMembershipStatus.Left,
+            pointsDelta = membership.pointsDelta + ScoringRules.LEAVE_TEST_POINTS,
+        )
+        testerMemberships = testerMemberships.filterNot { it.id == membershipId } + left
+
+        firestore.collection(COLLECTION_MEMBERSHIPS)
+            .document(membershipId)
+            .set(left.toFirestoreMap(), SetOptions.merge())
+        firestore.collection(COLLECTION_APPS)
+            .document(membership.appId)
+            .update(
+                mapOf(
+                    "testerCount" to FieldValue.increment(-1),
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+            )
+        applyScoreEvent(
+            userId = membership.testerId,
+            sourceType = "leaveTest",
+            sourceId = membership.id,
+            points = ScoringRules.LEAVE_TEST_POINTS,
+            reason = "Left joined test before day 14",
+        )
+
+        return JoinAppResult.Success(left)
+    }
+
+    override fun finishTester(membershipId: String): JoinAppResult =
+        updateOwnerTesterStatus(
+            membershipId = membershipId,
+            status = TestMembershipStatus.Finished,
+        )
+
+    override fun rejectTester(membershipId: String): JoinAppResult =
+        updateOwnerTesterStatus(
+            membershipId = membershipId,
+            status = TestMembershipStatus.Rejected,
+        )
+
+    override fun updateThemeMode(themeMode: ThemeMode) {
+        val user = currentUserProfile ?: return
+        currentUserProfile = user.copy(themeMode = themeMode)
+        firestore.collection(COLLECTION_USERS)
+            .document(user.id)
+            .update(
+                mapOf(
+                    "themeMode" to themeMode.name,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+            )
+    }
+
+    private fun updateOwnerTesterStatus(
+        membershipId: String,
+        status: TestMembershipStatus,
+    ): JoinAppResult {
+        val ownerId = currentUserProfile?.id
+            ?: return JoinAppResult.Failure("Owner action uchun email hisobingiz bilan kiring.")
+        val membership = ownerMemberships.firstOrNull { it.id == membershipId }
+            ?: return JoinAppResult.Failure("Tester topilmadi.")
+        if (membership.ownerId != ownerId) {
+            return JoinAppResult.Failure("Bu tester sizning ilovangizga tegishli emas.")
+        }
+
+        val updated = membership.copy(status = status)
+        ownerMemberships = ownerMemberships.filterNot { it.id == membershipId } + updated
+        firestore.collection(COLLECTION_MEMBERSHIPS)
+            .document(membershipId)
+            .set(updated.toFirestoreMap(), SetOptions.merge())
+
+        return JoinAppResult.Success(updated)
     }
 
     fun signIn(email: String, password: String) {
@@ -339,16 +457,29 @@ object FirebaseTrack14Repository : Track14Repository {
             }
     }
 
-    private fun listenToMemberships(userId: String?) {
-        membershipsListener?.remove()
-        memberships = emptyList()
+    private fun listenToTesterMemberships(userId: String?) {
+        testerMembershipsListener?.remove()
+        testerMemberships = emptyList()
         if (userId == null) return
 
-        membershipsListener = firestore.collection(COLLECTION_MEMBERSHIPS)
+        testerMembershipsListener = firestore.collection(COLLECTION_MEMBERSHIPS)
             .whereEqualTo("testerId", userId)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot == null) return@addSnapshotListener
-                memberships = snapshot.documents.mapNotNull { it.toTestMembership() }
+                testerMemberships = snapshot.documents.mapNotNull { it.toTestMembership() }
+            }
+    }
+
+    private fun listenToOwnerMemberships(userId: String?) {
+        ownerMembershipsListener?.remove()
+        ownerMemberships = emptyList()
+        if (userId == null) return
+
+        ownerMembershipsListener = firestore.collection(COLLECTION_MEMBERSHIPS)
+            .whereEqualTo("ownerId", userId)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot == null) return@addSnapshotListener
+                ownerMemberships = snapshot.documents.mapNotNull { it.toTestMembership() }
             }
     }
 
@@ -362,6 +493,32 @@ object FirebaseTrack14Repository : Track14Repository {
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot == null) return@addSnapshotListener
                 dailyTests = snapshot.documents.mapNotNull { it.toDailyTest() }
+            }
+    }
+
+    private fun listenToOwnerDailyTests(userId: String?) {
+        ownerDailyTestsListener?.remove()
+        ownerDailyTests = emptyList()
+        if (userId == null) return
+
+        ownerDailyTestsListener = firestore.collection(COLLECTION_DAILY_TESTS)
+            .whereEqualTo("ownerId", userId)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot == null) return@addSnapshotListener
+                ownerDailyTests = snapshot.documents.mapNotNull { it.toDailyTest() }
+            }
+    }
+
+    private fun listenToScoreEvents(userId: String?) {
+        scoreEventsListener?.remove()
+        scoreEvents = emptyList()
+        if (userId == null) return
+
+        scoreEventsListener = firestore.collection(COLLECTION_SCORE_EVENTS)
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot == null) return@addSnapshotListener
+                scoreEvents = snapshot.documents.mapNotNull { it.toScoreEvent() }
             }
     }
 
@@ -419,36 +576,152 @@ object FirebaseTrack14Repository : Track14Repository {
             normalized.startsWith("https://groups.google.")
     }
 
+    private fun applyMissedDayScoreEvents() {
+        val todayString = StreakRules.todayString()
+        val today = DATE_FORMAT.parse(todayString) ?: return
+        testerMemberships
+            .filter { it.status == TestMembershipStatus.Active }
+            .forEach { membership ->
+                buildStreakDailyTests(
+                    membership = membership,
+                    existingTests = dailyTests.filter { it.membershipId == membership.id },
+                )
+                    .filter { it.status == DailyTestStatus.Missed }
+                    .forEach { missedTest ->
+                        val missedDate = DATE_FORMAT.parse(missedTest.testDate) ?: return@forEach
+                        if (!missedDate.before(today)) return@forEach
+
+                        val sourceId = "${membership.id}-${missedTest.testDate}"
+                        val eventId = scoreEventId(
+                            userId = membership.testerId,
+                            sourceType = "missedDay",
+                            sourceId = sourceId,
+                        )
+                        if (scoreEvents.any { it.id == eventId }) return@forEach
+
+                        applyScoreEvent(
+                            userId = membership.testerId,
+                            sourceType = "missedDay",
+                            sourceId = sourceId,
+                            points = ScoringRules.MISSED_DAY_POINTS,
+                            reason = "Missed joined-test day",
+                        )
+                        firestore.collection(COLLECTION_MEMBERSHIPS)
+                            .document(membership.id)
+                            .update(
+                                mapOf(
+                                    "missedDaysCount" to FieldValue.increment(1),
+                                    "pointsDelta" to FieldValue.increment(ScoringRules.MISSED_DAY_POINTS.toLong()),
+                                    "updatedAt" to FieldValue.serverTimestamp(),
+                                ),
+                            )
+                    }
+            }
+    }
+
+    private fun applyScoreEvent(
+        userId: String,
+        sourceType: String,
+        sourceId: String,
+        points: Int,
+        reason: String,
+    ) {
+        val eventId = scoreEventId(
+            userId = userId,
+            sourceType = sourceType,
+            sourceId = sourceId,
+        )
+        if (scoreEvents.any { it.id == eventId }) return
+
+        val event = ScoreEvent(
+            id = eventId,
+            userId = userId,
+            sourceType = sourceType,
+            sourceId = sourceId,
+            points = points,
+            reason = reason,
+            createdAt = ISO_FORMAT.format(Date()),
+        )
+        scoreEvents = scoreEvents + event
+        val newOwnerScore = ((currentUserProfile?.takeIf { it.id == userId }?.ownerScore ?: 0) + points)
+            .coerceAtLeast(0)
+
+        firestore.collection(COLLECTION_SCORE_EVENTS)
+            .document(eventId)
+            .set(event.toFirestoreMap(), SetOptions.merge())
+        firestore.collection(COLLECTION_USERS)
+            .document(userId)
+            .update(
+                mapOf(
+                    "ownerScore" to FieldValue.increment(points.toLong()),
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+            )
+
+        if (currentUserProfile?.id == userId) {
+            currentUserProfile = currentUserProfile?.copy(ownerScore = newOwnerScore)
+            updateOwnerAppsRanking(
+                ownerId = userId,
+                ownerScore = newOwnerScore,
+            )
+        }
+    }
+
+    private fun updateOwnerAppsRanking(
+        ownerId: String,
+        ownerScore: Int,
+    ) {
+        val updatedApps = apps.map { app ->
+            if (app.ownerId == ownerId) {
+                app.copy(
+                    ownerScore = ownerScore,
+                    rankingScore = ScoringRules.rankingScore(
+                        ownerScore = ownerScore,
+                        testerCount = app.testerCount,
+                        requiredTesterCount = app.requiredTesterCount,
+                    ),
+                )
+            } else {
+                app
+            }
+        }
+        apps = updatedApps.sortedByDescending { it.rankingScore }
+        updatedApps
+            .filter { it.ownerId == ownerId }
+            .forEach { app ->
+                firestore.collection(COLLECTION_APPS)
+                    .document(app.id)
+                    .update(
+                        mapOf(
+                            "ownerScore" to app.ownerScore,
+                            "rankingScore" to app.rankingScore,
+                            "updatedAt" to FieldValue.serverTimestamp(),
+                        ),
+                    )
+            }
+    }
+
+    private fun scoreEventId(
+        userId: String,
+        sourceType: String,
+        sourceId: String,
+    ): String {
+        val raw = "$userId-$sourceType-$sourceId"
+        return "score-" + raw
+            .lowercase()
+            .replace(Regex("[^a-z0-9]+"), "-")
+            .trim('-')
+    }
+
     private fun buildStreakDailyTests(
         membership: TestMembership,
         existingTests: List<DailyTest>,
     ): List<DailyTest> {
-        val joinedDate = DATE_FORMAT.parse(membership.joinedDate) ?: return existingTests
-        val today = DATE_FORMAT.parse(DATE_FORMAT.format(Date())) ?: return existingTests
-        val existingByDate = existingTests.associateBy { it.testDate }
-        val calendar = Calendar.getInstance().apply { time = joinedDate }
-
-        return List(14) { index ->
-            val date = DATE_FORMAT.format(calendar.time)
-            val existing = existingByDate[date]
-            val status = when {
-                existing != null -> existing.status
-                calendar.time.before(today) -> DailyTestStatus.Missed
-                else -> DailyTestStatus.Pending
-            }
-            val test = existing ?: DailyTest(
-                id = "virtual-${membership.id}-$date",
-                membershipId = membership.id,
-                appId = membership.appId,
-                testerId = membership.testerId,
-                testDate = date,
-                status = status,
-                elapsedSeconds = null,
-                pointsApplied = 0,
-            )
-            calendar.add(Calendar.DATE, 1)
-            test
-        }
+        return StreakRules.projectFourteenDays(
+            membership = membership,
+            existingTests = existingTests,
+            today = StreakRules.todayString(),
+        )
     }
 
     private fun TrackApp.toFirestoreMap(): Map<String, Any?> =
@@ -493,6 +766,7 @@ object FirebaseTrack14Repository : Track14Repository {
             "id" to id,
             "membershipId" to membershipId,
             "appId" to appId,
+            "ownerId" to ownerId,
             "testerId" to testerId,
             "testDate" to testDate,
             "status" to status.name,
@@ -502,6 +776,17 @@ object FirebaseTrack14Repository : Track14Repository {
             "elapsedSeconds" to elapsedSeconds,
             "pointsApplied" to pointsApplied,
             "updatedAt" to FieldValue.serverTimestamp(),
+        )
+
+    private fun ScoreEvent.toFirestoreMap(): Map<String, Any?> =
+        mapOf(
+            "id" to id,
+            "userId" to userId,
+            "sourceType" to sourceType,
+            "sourceId" to sourceId,
+            "points" to points,
+            "reason" to reason,
+            "createdAt" to createdAt,
         )
 
     private fun DocumentSnapshot.toTrackApp(): TrackApp? {
@@ -550,6 +835,7 @@ object FirebaseTrack14Repository : Track14Repository {
             id = getString("id") ?: id,
             membershipId = getString("membershipId") ?: return null,
             appId = getString("appId") ?: return null,
+            ownerId = getString("ownerId").orEmpty(),
             testerId = getString("testerId") ?: return null,
             testDate = getString("testDate") ?: return null,
             status = enumValueOrDefault(getString("status"), DailyTestStatus.Pending),
@@ -558,6 +844,18 @@ object FirebaseTrack14Repository : Track14Repository {
             completedAtMillis = getLong("completedAtMillis"),
             elapsedSeconds = getLong("elapsedSeconds")?.toInt(),
             pointsApplied = getLong("pointsApplied")?.toInt() ?: 0,
+        )
+    }
+
+    private fun DocumentSnapshot.toScoreEvent(): ScoreEvent? {
+        return ScoreEvent(
+            id = getString("id") ?: id,
+            userId = getString("userId") ?: return null,
+            sourceType = getString("sourceType") ?: return null,
+            sourceId = getString("sourceId") ?: return null,
+            points = getLong("points")?.toInt() ?: 0,
+            reason = getString("reason").orEmpty(),
+            createdAt = getString("createdAt").orEmpty(),
         )
     }
 
@@ -608,6 +906,9 @@ object FirebaseTrack14Repository : Track14Repository {
             ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
             ?: "Track14 user"
 
+    private fun testerLabel(testerId: String): String =
+        "Tester " + testerId.takeLast(6).ifBlank { testerId }
+
     private fun Timestamp.toDateString(): String =
         DATE_FORMAT.format(toDate())
 
@@ -618,7 +919,11 @@ object FirebaseTrack14Repository : Track14Repository {
     private const val COLLECTION_APPS = "apps"
     private const val COLLECTION_MEMBERSHIPS = "memberships"
     private const val COLLECTION_DAILY_TESTS = "dailyTests"
+    private const val COLLECTION_SCORE_EVENTS = "scoreEvents"
     private const val DAILY_TEST_MIN_MILLIS = 30_000L
 
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    private val ISO_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
 }

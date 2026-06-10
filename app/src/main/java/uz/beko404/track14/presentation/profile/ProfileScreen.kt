@@ -1,5 +1,7 @@
 package uz.beko404.track14.presentation.profile
 
+import android.content.Context
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,7 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import uz.beko404.track14.data.Track14RepositoryProvider
 import uz.beko404.track14.domain.model.ThemeMode
@@ -32,7 +37,10 @@ fun ProfileScreen(
     onSignIn: (email: String, password: String) -> Unit,
     onSignOut: () -> Unit,
 ) {
-    val user = Track14RepositoryProvider.current.snapshot.currentUser
+    val repository = Track14RepositoryProvider.current
+    val user = repository.snapshot.currentUser
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
 
     PlaceholderScreen(
         title = "Profil",
@@ -67,7 +75,7 @@ fun ProfileScreen(
 
         SectionHeader(
             title = "Mavzu variantlari",
-            subtitle = "Saqlash keyingi stepda ulanadi.",
+            subtitle = "Tanlov profil bilan birga saqlanadi.",
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -82,10 +90,43 @@ fun ProfileScreen(
                     ThemeOptionRow(
                         mode = mode,
                         selected = mode.matches(user.themeMode),
+                        onClick = {
+                            repository.updateThemeMode(mode.toThemeMode())
+                        },
                     )
                 }
             }
         }
+
+        SectionHeader(
+            title = "Linklar",
+            subtitle = "Support va community manzillari.",
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ProfileLinkRow(
+                title = "Support",
+                value = TRACK14_SUPPORT_URL,
+                onClick = { uriHandler.openUri(TRACK14_SUPPORT_URL) },
+            )
+            ProfileLinkRow(
+                title = "Track14 Google Group",
+                value = TRACK14_GOOGLE_GROUP_URL,
+                onClick = { uriHandler.openUri(TRACK14_GOOGLE_GROUP_URL) },
+            )
+            ProfileLinkRow(
+                title = "Community",
+                value = TRACK14_COMMUNITY_URL,
+                onClick = { uriHandler.openUri(TRACK14_COMMUNITY_URL) },
+            )
+        }
+
+        SectionHeader(
+            title = "Ilova",
+            subtitle = appVersionLabel(context),
+        )
     }
 }
 
@@ -96,21 +137,30 @@ private fun Track14ThemeMode.matches(themeMode: ThemeMode): Boolean =
         Track14ThemeMode.Dark -> themeMode == ThemeMode.Dark
     }
 
+private fun Track14ThemeMode.toThemeMode(): ThemeMode =
+    when (this) {
+        Track14ThemeMode.System -> ThemeMode.System
+        Track14ThemeMode.Light -> ThemeMode.Light
+        Track14ThemeMode.Dark -> ThemeMode.Dark
+    }
+
 @Composable
 private fun ThemeOptionRow(
     mode: Track14ThemeMode,
     selected: Boolean,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
             selected = selected,
-            onClick = null,
+            onClick = onClick,
         )
         Text(
             text = mode.label,
@@ -119,3 +169,45 @@ private fun ThemeOptionRow(
         )
     }
 }
+
+@Composable
+private fun ProfileLinkRow(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+private fun appVersionLabel(context: Context): String {
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    return "Versiya ${packageInfo.versionName}"
+}
+
+private const val TRACK14_SUPPORT_URL = "mailto:support@track14.app"
+private const val TRACK14_GOOGLE_GROUP_URL = "http://groups.google.com/g/track14-testers"
+private const val TRACK14_COMMUNITY_URL = "https://groups.google.com/g/track14-testers"

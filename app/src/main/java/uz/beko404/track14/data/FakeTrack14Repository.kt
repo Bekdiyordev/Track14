@@ -22,7 +22,7 @@ import uz.beko404.track14.domain.model.UserProfile
 import uz.beko404.track14.domain.repository.Track14Repository
 
 object FakeTrack14Repository : Track14Repository {
-    private val currentUser = UserProfile(
+    private var currentUser by mutableStateOf(UserProfile(
         id = "user-owner-01",
         email = "developer@track14.local",
         displayName = "Bek Developer",
@@ -30,7 +30,7 @@ object FakeTrack14Repository : Track14Repository {
         freeAppLimit = 3,
         themeMode = ThemeMode.System,
         timezoneId = "Asia/Samarkand",
-    )
+    ))
 
     private var apps by mutableStateOf(
         listOf(
@@ -120,6 +120,9 @@ object FakeTrack14Repository : Track14Repository {
 
     private val ownerTesterSnapshots = listOf(
         OwnerTesterSnapshot(
+            appId = "app-track14",
+            appName = "Track14",
+            membershipId = "owner-membership-ali",
             testerName = "Ali Tester",
             membershipStatus = TestMembershipStatus.Active,
             streak = listOf(
@@ -130,6 +133,9 @@ object FakeTrack14Repository : Track14Repository {
             ),
         ),
         OwnerTesterSnapshot(
+            appId = "app-track14",
+            appName = "Track14",
+            membershipId = "owner-membership-madina",
             testerName = "Madina Dev",
             membershipStatus = TestMembershipStatus.Active,
             streak = listOf(
@@ -319,6 +325,7 @@ object FakeTrack14Repository : Track14Repository {
             id = "daily-$membershipId-$today",
             membershipId = membership.id,
             appId = membership.appId,
+            ownerId = membership.ownerId,
             testerId = membership.testerId,
             testDate = today,
             status = DailyTestStatus.Pending,
@@ -356,6 +363,54 @@ object FakeTrack14Repository : Track14Repository {
         }
     }
 
+    override fun leaveJoinedTest(membershipId: String): JoinAppResult {
+        val membership = memberships.firstOrNull { it.id == membershipId && it.status == TestMembershipStatus.Active }
+            ?: return JoinAppResult.Failure("Faol test topilmadi.")
+        val left = membership.copy(
+            status = TestMembershipStatus.Left,
+            pointsDelta = membership.pointsDelta - 5,
+        )
+        memberships = memberships.filterNot { it.id == membershipId } + left
+        apps = apps.map { app ->
+            if (app.id == membership.appId) {
+                app.copy(testerCount = (app.testerCount - 1).coerceAtLeast(0))
+            } else {
+                app
+            }
+        }
+        return JoinAppResult.Success(left)
+    }
+
+    override fun finishTester(membershipId: String): JoinAppResult =
+        updateOwnerTesterStatus(
+            membershipId = membershipId,
+            status = TestMembershipStatus.Finished,
+        )
+
+    override fun rejectTester(membershipId: String): JoinAppResult =
+        updateOwnerTesterStatus(
+            membershipId = membershipId,
+            status = TestMembershipStatus.Rejected,
+        )
+
+    override fun updateThemeMode(themeMode: ThemeMode) {
+        currentUser = currentUser.copy(themeMode = themeMode)
+    }
+
+    private fun updateOwnerTesterStatus(
+        membershipId: String,
+        status: TestMembershipStatus,
+    ): JoinAppResult {
+        val membership = memberships.firstOrNull { it.id == membershipId }
+            ?: return JoinAppResult.Failure("Tester topilmadi.")
+        if (membership.ownerId != currentUser.id) {
+            return JoinAppResult.Failure("Bu tester sizning ilovangizga tegishli emas.")
+        }
+        val updated = membership.copy(status = status)
+        memberships = memberships.filterNot { it.id == membershipId } + updated
+        return JoinAppResult.Success(updated)
+    }
+
     private fun nextAppId(packageName: String): String {
         val baseId = "app-" + packageName
             .lowercase()
@@ -391,6 +446,7 @@ object FakeTrack14Repository : Track14Repository {
         id = id,
         membershipId = membershipId,
         appId = appId,
+        ownerId = apps.firstOrNull { it.id == appId }?.ownerId.orEmpty(),
         testerId = currentUser.id,
         testDate = testDate,
         status = status,

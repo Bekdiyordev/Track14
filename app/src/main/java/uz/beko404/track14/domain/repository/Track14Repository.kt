@@ -6,6 +6,7 @@ import uz.beko404.track14.domain.model.AddOwnerAppRequest
 import uz.beko404.track14.domain.model.AddOwnerAppResult
 import uz.beko404.track14.domain.model.DailyTestResult
 import uz.beko404.track14.domain.model.JoinAppResult
+import uz.beko404.track14.domain.model.ThemeMode
 
 interface Track14Repository {
     val snapshot: Track14Snapshot
@@ -23,4 +24,12 @@ interface Track14Repository {
     fun startDailyTest(membershipId: String): DailyTestResult
 
     fun completeEligibleDailyTests()
+
+    fun leaveJoinedTest(membershipId: String): JoinAppResult
+
+    fun finishTester(membershipId: String): JoinAppResult
+
+    fun rejectTester(membershipId: String): JoinAppResult
+
+    fun updateThemeMode(themeMode: ThemeMode)
 }

@@ -4,6 +4,7 @@ data class DailyTest(
     val id: String,
     val membershipId: String,
     val appId: String,
+    val ownerId: String,
     val testerId: String,
     val testDate: String,
     val status: DailyTestStatus,

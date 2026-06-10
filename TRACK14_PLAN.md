@@ -1,7 +1,7 @@
 # Track14 Product and Implementation Plan
 
 Last updated: 2026-06-05
-Current step: `STEP-10` - Scoring And Ranking not started
+Current step: `STEP-13` - QA And Release Prep blocked on device runtime QA
 
 ## 1. Product Goal
 
@@ -696,74 +696,101 @@ Acceptance criteria:
 
 ### `STEP-10` Scoring And Ranking
 
-Status: not started
+Status: completed
 
 Tasks:
 
-- Apply score events for completed, missed, and left tests.
-- Recalculate user owner score.
-- Recalculate app ranking score.
-- Sort Home by ranking score.
+- Apply score events for completed, missed, and left tests. Done.
+- Recalculate user owner score. Done.
+- Recalculate app ranking score. Done for current user's own apps.
+- Sort Home by ranking score. Done through Firestore ranking query and local snapshot sort.
 
 Acceptance criteria:
 
-- Testing other apps increases score.
-- Missing/leaving decreases score.
-- Own apps move in Home according to owner score.
+- Testing other apps increases score. Implemented with `+2` daily score events.
+- Missing/leaving decreases score. Implemented with `-1` missed day and `-5` leave test score events.
+- Own apps move in Home according to owner score. Implemented by updating own app `ownerScore` and `rankingScore`.
+- `:app:assembleDebug` passes after the scoring/ranking changes.
 
 ### `STEP-11` Owner Tester Management
 
-Status: not started
+Status: completed
 
 Tasks:
 
-- Build owner app detail.
-- Show tester list.
-- Show each tester's streak box.
-- Add finish tester action.
-- Add reject tester action.
+- Build owner app detail. Done inside My Apps owner management section.
+- Show tester list. Done, grouped by owner app.
+- Show each tester's streak box. Done.
+- Add finish tester action. Done.
+- Add reject tester action. Done.
 
 Acceptance criteria:
 
-- Owner sees testers for each own app.
-- Owner can finish/reject testers in Track14.
-- Tester membership status updates.
+- Owner sees testers for each own app. Implemented through owner membership listener.
+- Owner can finish/reject testers in Track14. Implemented.
+- Tester membership status updates. Implemented with Firestore membership status updates.
+- `:app:assembleDebug` passes after the owner tester management changes.
 
 ### `STEP-12` Profile And Settings
 
-Status: not started
+Status: completed
 
 Tasks:
 
-- Persist theme setting.
-- Add support link.
-- Add Track14 Google Group link.
-- Add community link.
-- Add app version display.
+- Persist theme setting. Done with Firebase user profile `themeMode`.
+- Add support link. Done.
+- Add Track14 Google Group link. Done.
+- Add community link. Done.
+- Add app version display. Done.
 
 Acceptance criteria:
 
-- Theme changes apply.
-- Profile contains required links and account actions.
+- Theme changes apply. Implemented at app root from repository profile state.
+- Profile contains required links and account actions. Implemented.
+- `:app:assembleDebug` passes after the profile/settings changes.
 
 ### `STEP-13` QA And Release Prep
 
-Status: not started
+Status: blocked
 
 Tasks:
 
-- Add unit tests for scoring and streak calculation.
-- Add UI tests for main navigation.
-- Test add app flow.
-- Test daily test flow on emulator/device.
-- Check permissions and notification behavior.
-- Prepare release checklist.
+- Add unit tests for scoring and streak calculation. Done.
+- Add UI tests for main navigation. Not done.
+- Test add app flow. Pending device/emulator runtime QA.
+- Test daily test flow on emulator/device. Pending device/emulator runtime QA.
+- Check permissions and notification behavior. Pending device/emulator runtime QA.
+- Prepare release checklist. Done.
 
 Acceptance criteria:
 
-- Project builds.
-- Core flows tested.
-- Known limitations documented.
+- Project builds. `:app:assembleDebug` passes.
+- Core domain rules tested. `:app:testDebugUnitTest` passes.
+- Known limitations documented below.
+
+Automated QA completed:
+
+- Added unit tests for MVP scoring constants and ranking formula.
+- Added unit tests for 14-day streak projection, including completed, missed, and pending days.
+- Ran `./gradlew :app:testDebugUnitTest :app:assembleDebug` successfully.
+
+Release checklist:
+
+- Confirm Firebase Console Email/Password Auth is enabled.
+- Confirm Firestore `users`, `apps`, `memberships`, `dailyTests`, and `scoreEvents` rules allow only intended owner/tester reads and writes.
+- Install debug APK on a physical Android device or emulator.
+- Verify sign in/sign up with email and password.
+- Verify Add Own App with installed-app picker and manual fallback fields.
+- Verify Join flow: Google Group opened, Play opt-in opened, install/open creates active membership.
+- Verify Start Test: returning before 30 seconds does not complete today.
+- Verify Start Test: returning after at least 30 seconds completes today and adds points.
+- Verify notification behavior on Android 13+ after granting notification permission.
+- Verify owner can finish and reject testers in My Apps.
+- Verify Profile theme changes persist after app restart.
+
+Blocker:
+
+- Device/emulator runtime QA could not be completed in this environment because `adb` is not installed or not on `PATH`.
 
 ## 9. Remaining Open Items
 

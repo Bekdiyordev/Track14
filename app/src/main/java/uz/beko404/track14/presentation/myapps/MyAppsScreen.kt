@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import uz.beko404.track14.data.Track14RepositoryProvider
 import uz.beko404.track14.domain.model.AddOwnerAppRequest
 import uz.beko404.track14.domain.model.AddOwnerAppResult
+import uz.beko404.track14.domain.model.JoinAppResult
 import uz.beko404.track14.domain.model.OwnerTesterSnapshot
+import uz.beko404.track14.domain.model.TestMembershipStatus
 import uz.beko404.track14.presentation.auth.AuthPromptCard
 import uz.beko404.track14.presentation.auth.AuthUiState
 import uz.beko404.track14.presentation.common.AppCard
@@ -141,14 +144,52 @@ fun MyAppsScreen(
 
         SectionHeader(
             title = "Tester streaklari",
-            subtitle = "Ilova egasi ko'radigan tester holati uchun boshlang'ich ko'rinish.",
+            subtitle = "O'z ilovalaringizga qo'shilgan testerlar va ularning 14 kunlik holati.",
         )
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            snapshot.ownerTesterSnapshots.forEach { tester ->
-                OwnerTesterCard(tester = tester)
+        if (snapshot.ownerTesterSnapshots.isEmpty()) {
+            EmptyState(
+                title = "Testerlar hali yo'q",
+                message = "Testerlar join flow orqali ilovangizga qo'shilganda shu yerda ko'rinadi.",
+            )
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                snapshot.ownerTesterSnapshots
+                    .groupBy { it.appId }
+                    .forEach { (_, testers) ->
+                        Text(
+                            text = testers.first().appName,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        testers.forEach { tester ->
+                            OwnerTesterCard(
+                                tester = tester,
+                                onFinish = {
+                                    when (val result = repository.finishTester(tester.membershipId)) {
+                                        is JoinAppResult.Success -> {
+                                            Toast.makeText(context, "Tester tugatildi.", Toast.LENGTH_SHORT).show()
+                                        }
+                                        is JoinAppResult.Failure -> {
+                                            Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                                onReject = {
+                                    when (val result = repository.rejectTester(tester.membershipId)) {
+                                        is JoinAppResult.Success -> {
+                                            Toast.makeText(context, "Tester rad etildi.", Toast.LENGTH_SHORT).show()
+                                        }
+                                        is JoinAppResult.Failure -> {
+                                            Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    }
             }
         }
     }
@@ -424,7 +465,11 @@ private fun LimitNotice(limit: Int) {
 }
 
 @Composable
-private fun OwnerTesterCard(tester: OwnerTesterSnapshot) {
+private fun OwnerTesterCard(
+    tester: OwnerTesterSnapshot,
+    onFinish: () -> Unit,
+    onReject: () -> Unit,
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -451,6 +496,19 @@ private fun OwnerTesterCard(tester: OwnerTesterSnapshot) {
                 )
             }
             StreakGrid(states = tester.streak.toStreakStates())
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                PrimaryActionButton(
+                    text = "Finish",
+                    enabled = tester.membershipStatus != TestMembershipStatus.Finished,
+                    onClick = onFinish,
+                )
+                TextButton(
+                    enabled = tester.membershipStatus != TestMembershipStatus.Rejected,
+                    onClick = onReject,
+                ) {
+                    Text(text = "Reject")
+                }
+            }
         }
     }
 }
