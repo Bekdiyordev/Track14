@@ -1,5 +1,15 @@
 package uz.beko404.track14.presentation.testing
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,10 +17,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import uz.beko404.track14.R
 import uz.beko404.track14.data.Track14RepositoryProvider
+import uz.beko404.track14.domain.model.DailyTestResult
 import uz.beko404.track14.domain.model.TestMembershipStatus
 import uz.beko404.track14.presentation.auth.AuthPromptCard
 import uz.beko404.track14.presentation.auth.AuthUiState
@@ -28,8 +47,23 @@ fun TestingAppsScreen(
     authState: AuthUiState,
     onSignIn: (email: String, password: String) -> Unit,
 ) {
-    val joinedTests = Track14RepositoryProvider.current.snapshot.joinedTests
+    val repository = Track14RepositoryProvider.current
+    val joinedTests = repository.snapshot.joinedTests
         .filter { it.membership.status != TestMembershipStatus.Pending }
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                repository.completeEligibleDailyTests()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     PlaceholderScreen(
         title = "Testlar",
@@ -77,10 +111,82 @@ fun TestingAppsScreen(
                     StreakGrid(states = joinedTest.dailyTests.toStreakDayStates())
                     PrimaryActionButton(
                         text = "Testni boshlash",
-                        onClick = {},
+                        onClick = {
+                            startDailyTestFlow(
+                                context = context,
+                                packageName = joinedTest.app.packageName,
+                                appName = joinedTest.app.name,
+                                onStartDailyTest = {
+                                    repository.startDailyTest(joinedTest.membership.id)
+                                },
+                            )
+                        },
                     )
                 }
             }
         }
     }
 }
+
+private fun startDailyTestFlow(
+    context: Context,
+    packageName: String,
+    appName: String,
+    onStartDailyTest: () -> DailyTestResult,
+) {
+    val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
+    if (launchIntent == null) {
+        Toast.makeText(context, "Ilova qurilmada topilmadi. Play install linkini qayta oching.", Toast.LENGTH_LONG).show()
+        return
+    }
+
+    when (val result = onStartDailyTest()) {
+        is DailyTestResult.Failure -> {
+            Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+        }
+        is DailyTestResult.Success -> {
+            scheduleDailyTestReminder(context = context, appName = appName)
+            context.startActivity(launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+    }
+}
+
+private fun scheduleDailyTestReminder(
+    context: Context,
+    appName: String,
+) {
+    Handler(Looper.getMainLooper()).postDelayed(
+        {
+            if (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return@postDelayed
+            }
+
+            val notificationManager = context.getSystemService(NotificationManager::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                notificationManager.createNotificationChannel(
+                    NotificationChannel(
+                        DAILY_TEST_CHANNEL_ID,
+                        "Daily test",
+                        NotificationManager.IMPORTANCE_DEFAULT,
+                    ),
+                )
+            }
+
+            val notification = NotificationCompat.Builder(context, DAILY_TEST_CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Bugungi test tayyor")
+                .setContentText("$appName uchun 30 soniya o'tdi. Track14ga qayting.")
+                .setAutoCancel(true)
+                .build()
+
+            notificationManager.notify(appName.hashCode(), notification)
+        },
+        DAILY_TEST_MIN_MILLIS,
+    )
+}
+
+private const val DAILY_TEST_CHANNEL_ID = "daily_test"
+private const val DAILY_TEST_MIN_MILLIS = 30_000L

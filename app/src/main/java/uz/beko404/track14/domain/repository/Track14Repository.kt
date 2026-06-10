@@ -4,6 +4,7 @@ import uz.beko404.track14.domain.model.Track14Snapshot
 import uz.beko404.track14.domain.model.TrackApp
 import uz.beko404.track14.domain.model.AddOwnerAppRequest
 import uz.beko404.track14.domain.model.AddOwnerAppResult
+import uz.beko404.track14.domain.model.DailyTestResult
 import uz.beko404.track14.domain.model.JoinAppResult
 
 interface Track14Repository {
@@ -18,4 +19,8 @@ interface Track14Repository {
     fun markPlayOptInOpened(appId: String): JoinAppResult
 
     fun joinApp(appId: String): JoinAppResult
+
+    fun startDailyTest(membershipId: String): DailyTestResult
+
+    fun completeEligibleDailyTests()
 }

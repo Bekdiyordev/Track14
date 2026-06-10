@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import uz.beko404.track14.domain.model.AddOwnerAppRequest
 import uz.beko404.track14.domain.model.AddOwnerAppResult
 import uz.beko404.track14.domain.model.DailyTest
+import uz.beko404.track14.domain.model.DailyTestResult
 import uz.beko404.track14.domain.model.DailyTestStatus
 import uz.beko404.track14.domain.model.JoinedTestSnapshot
 import uz.beko404.track14.domain.model.JoinAppResult
@@ -103,7 +104,7 @@ object FakeTrack14Repository : Track14Repository {
         ),
     ))
 
-    private val dailyTestsByMembershipId = mapOf(
+    private var dailyTestsByMembershipId by mutableStateOf(mapOf(
         "membership-market-helper" to listOf(
             dailyTest("daily-market-01", "membership-market-helper", "app-market-helper", "2026-06-01", DailyTestStatus.Completed, 42, 2),
             dailyTest("daily-market-02", "membership-market-helper", "app-market-helper", "2026-06-02", DailyTestStatus.Completed, 35, 2),
@@ -115,7 +116,7 @@ object FakeTrack14Repository : Track14Repository {
             dailyTest("daily-budget-02", "membership-budget-kit", "app-budget-kit", "2026-06-03", DailyTestStatus.Completed, 31, 2),
             dailyTest("daily-budget-03", "membership-budget-kit", "app-budget-kit", "2026-06-04", DailyTestStatus.Pending, null, 0),
         ),
-    )
+    ))
 
     private val ownerTesterSnapshots = listOf(
         OwnerTesterSnapshot(
@@ -300,6 +301,61 @@ object FakeTrack14Repository : Track14Repository {
         return JoinAppResult.Success(membership)
     }
 
+    override fun startDailyTest(membershipId: String): DailyTestResult {
+        val membership = memberships.firstOrNull { it.id == membershipId && it.status == TestMembershipStatus.Active }
+            ?: return DailyTestResult.Failure("Faol test topilmadi.")
+        val today = "2026-06-10"
+        val existing = dailyTestsByMembershipId[membershipId].orEmpty()
+            .firstOrNull { it.testDate == today }
+        if (existing?.status == DailyTestStatus.Completed) {
+            return DailyTestResult.Failure("Bugungi test allaqachon bajarilgan.")
+        }
+        if (existing?.status == DailyTestStatus.Pending && existing.startedAtMillis != null) {
+            return DailyTestResult.Success(existing)
+        }
+
+        val now = System.currentTimeMillis()
+        val dailyTest = DailyTest(
+            id = "daily-$membershipId-$today",
+            membershipId = membership.id,
+            appId = membership.appId,
+            testerId = membership.testerId,
+            testDate = today,
+            status = DailyTestStatus.Pending,
+            startedAtMillis = now,
+            eligibleAtMillis = now + DAILY_TEST_MIN_MILLIS,
+            completedAtMillis = null,
+            elapsedSeconds = null,
+            pointsApplied = 0,
+        )
+        dailyTestsByMembershipId = dailyTestsByMembershipId + (
+            membershipId to (dailyTestsByMembershipId[membershipId].orEmpty().filterNot { it.id == dailyTest.id } + dailyTest)
+        )
+        return DailyTestResult.Success(dailyTest)
+    }
+
+    override fun completeEligibleDailyTests() {
+        val now = System.currentTimeMillis()
+        dailyTestsByMembershipId = dailyTestsByMembershipId.mapValues { (_, tests) ->
+            tests.map { test ->
+                if (
+                    test.status == DailyTestStatus.Pending &&
+                    test.startedAtMillis != null &&
+                    now - test.startedAtMillis >= DAILY_TEST_MIN_MILLIS
+                ) {
+                    test.copy(
+                        status = DailyTestStatus.Completed,
+                        completedAtMillis = now,
+                        elapsedSeconds = ((now - test.startedAtMillis) / 1000).toInt(),
+                        pointsApplied = 2,
+                    )
+                } else {
+                    test
+                }
+            }
+        }
+    }
+
     private fun nextAppId(packageName: String): String {
         val baseId = "app-" + packageName
             .lowercase()
@@ -343,4 +399,5 @@ object FakeTrack14Repository : Track14Repository {
     )
 
     private const val TRACK14_GOOGLE_GROUP_URL = "http://groups.google.com/g/track14-testers"
+    private const val DAILY_TEST_MIN_MILLIS = 30_000L
 }

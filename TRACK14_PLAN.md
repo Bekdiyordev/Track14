@@ -1,7 +1,7 @@
 # Track14 Product and Implementation Plan
 
 Last updated: 2026-06-05
-Current step: `STEP-09` - Daily Test And 14-Day Streak not started
+Current step: `STEP-10` - Scoring And Ranking not started
 
 ## 1. Product Goal
 
@@ -673,25 +673,26 @@ Acceptance criteria:
 
 ### `STEP-09` Daily Test And 14-Day Streak
 
-Status: not started
+Status: completed
 
 Tasks:
 
-- Implement Start Test.
-- Launch target app by package name.
-- Track return elapsed time.
-- Mark daily test complete after at least 30 seconds.
-- Mark missed days.
-- Schedule local notification reminder.
-- Update streak UI.
+- Implement Start Test. Done.
+- Launch target app by package name. Done.
+- Track return elapsed time. Done through resume lifecycle check.
+- Mark daily test complete after at least 30 seconds. Done.
+- Mark missed days. Done in 14-day streak projection.
+- Schedule local notification reminder. Done when notification permission is granted.
+- Update streak UI. Done from Firestore `dailyTests`.
 
 Acceptance criteria:
 
-- One successful daily test checks today's box.
-- Returning before 30 seconds does not complete the day.
-- Staying outside Track14 for at least 30 seconds completes the day when the app confirms elapsed time.
-- Missed days are shown red.
-- Only one completion per app per day counts.
+- One successful daily test checks today's box. Implemented.
+- Returning before 30 seconds does not complete the day. Implemented.
+- Staying outside Track14 for at least 30 seconds completes the day when Track14 resumes. Implemented.
+- Missed days are shown red. Implemented.
+- Only one completion per app per day counts. Implemented.
+- `:app:assembleDebug` passes after the daily test changes.
 
 ### `STEP-10` Scoring And Ranking
 
