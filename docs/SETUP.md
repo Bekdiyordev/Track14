@@ -50,3 +50,19 @@ is not enabled yet. Do this once:
 
     Sign out and in again in the app so the new role reaches the token. Further roles are
     given from the admin app (`adminSetRole`).
+
+# Setup: admin app (`:admin` module)
+
+The admin app lives in this project as a separate Android module with its own package
+`uz.beko404.track14.admin`. It uses the same Firebase project; every action goes through the
+`admin*` Cloud Functions, which check the staff role on the server.
+
+17. Firebase console > Project settings > Add app > Android: package `uz.beko404.track14.admin`,
+    add the debug SHA-1 (and later the release SHA-1). Download its `google-services.json` into
+    `admin/` (not `app/`).
+18. Put the same Web client ID as the user app into `admin/src/main/res/values/auth_config.xml`.
+19. App Check > Apps: register the admin app with Play Integrity; in debug, add the debug token
+    printed in Logcat (`DebugAppCheckProvider`).
+20. Deploy the new indexes: `firebase deploy --only firestore:indexes` (apps and reports by status).
+21. In Android Studio choose the `admin` run configuration and sign in with the superadmin account
+    from step 16.

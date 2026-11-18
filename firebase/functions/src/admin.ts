@@ -36,7 +36,8 @@ function audit(tx: Transaction | null, actor: string, action: string, target: st
 
 // ------------------------------------------------------------------ roles
 
-const SetRole = z.object({ uid: uidSchema, role: z.enum(["superadmin", "moderator", "support"]).nullable() }).strict();
+/** role omitted or null removes the staff role (the Android SDK drops null map values). */
+const SetRole = z.object({ uid: uidSchema, role: z.enum(["superadmin", "moderator", "support"]).nullable().default(null) }).strict();
 
 export const adminSetRole = onCall(callableOptions, async (req) => {
   const actor = await requireRole(req, ["superadmin"]);

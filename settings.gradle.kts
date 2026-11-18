@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "Track14"
 include(":app")
 include(":domain")
+include(":admin")
