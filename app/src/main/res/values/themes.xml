@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppCompat parent: needed for per-app language switching below Android 13. UI itself is Compose. -->
+    <style name="Theme.Track14" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/track14_window_background</item>
+    </style>
+
+    <!-- System splash: brand blue with the 14-segment ring, then the app theme. -->
+    <style name="Theme.Track14.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Track14</item>
+    </style>
+</resources>

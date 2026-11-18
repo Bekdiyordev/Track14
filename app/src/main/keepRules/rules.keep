@@ -1,0 +1,4 @@
+# Keep rules for release builds (R8). Hilt, Firebase and Compose ship their own
+# consumer rules; add project specific ones here only when a release build needs them.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

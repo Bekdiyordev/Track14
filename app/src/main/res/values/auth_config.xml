@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  OAuth *Web* client ID of the Firebase project (not a secret).
+  Firebase console > Authentication > Sign-in method > Google > Web SDK configuration.
+  Do not name it default_web_client_id: the google-services plugin generates that one.
+-->
+<resources>
+    <string name="google_web_client_id" translatable="false">REPLACE_WITH_WEB_CLIENT_ID</string>
+</resources>

@@ -1,0 +1,212 @@
+rules_version = '2';
+
+// Track14 security rules.
+// Principle: the client only writes its own profile, draft apps, feedback and reports.
+// Coins, wallets, tests, day statuses, campaigns, the public catalog and purchases are
+// written by Cloud Functions (Admin SDK bypasses these rules). Everything not listed is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    // Staff role comes from a custom claim set by a Function: superadmin | moderator | support.
+    function role() {
+      return signedIn() ? request.auth.token.get('role', '') : '';
+    }
+    function isStaff() {
+      return role() in ['superadmin', 'moderator', 'support'];
+    }
+    function isSuperadmin() {
+      return role() == 'superadmin';
+    }
+    function isBlocked() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('blocked', false) == true;
+    }
+    function canWrite() {
+      return signedIn() && !isBlocked();
+    }
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      allow read: if isUser(uid) || isStaff();
+      // Only profile fields. reliability, stats, blocked are written by Functions.
+      allow create: if isUser(uid)
+        && request.resource.data.keys().hasOnly(
+          ['displayName', 'photoUrl', 'email', 'lang', 'country', 'timezone',
+           'deviceModel', 'usageAccess', 'createdAt'])
+        && request.resource.data.createdAt == request.time;
+      allow update: if isUser(uid) && !isBlocked()
+        && onlyChanges(['displayName', 'photoUrl', 'lang', 'country', 'timezone',
+                        'deviceModel', 'usageAccess']);
+      allow delete: if false;
+
+      // FCM registration tokens; the document id is the token itself.
+      match /tokens/{token} {
+        allow read, delete: if isUser(uid);
+        allow create, update: if isUser(uid)
+          && request.resource.data.keys().hasOnly(['platform', 'updatedAt'])
+          && request.resource.data.platform == 'android'
+          && request.resource.data.updatedAt == request.time
+          && token.size() <= 4096;
+      }
+
+      match /notifications/{id} {
+        allow read: if isUser(uid);
+        allow update: if isUser(uid) && onlyChanges(['read'])
+          && request.resource.data.read is bool;
+        allow create, delete: if false;
+      }
+    }
+
+    // ---------- money: Functions only ----------
+    match /wallets/{uid} {
+      allow read: if isUser(uid) || isStaff();
+      allow write: if false;
+    }
+    match /transactions/{txId} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff());
+      allow write: if false;
+    }
+    match /purchases/{token} {
+      allow read, write: if false;
+    }
+    match /devices/{deviceId} {
+      allow read, write: if false;
+    }
+
+    // ---------- public catalog (no login needed) ----------
+    match /catalog/{appId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ---------- apps (owner drafts) ----------
+    match /apps/{appId} {
+      allow read: if signedIn() && (resource.data.ownerUid == request.auth.uid || isStaff());
+      allow create: if canWrite()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'draft'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly(
+          ['ownerUid', 'status', 'createdAt', 'name', 'packageName', 'iconUrl', 'source',
+           'versionName', 'shortDesc', 'instructions', 'category', 'optInUrl', 'playUrl'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.packageName is string
+        && request.resource.data.packageName.matches('^[a-zA-Z][a-zA-Z0-9_]*([.][a-zA-Z][a-zA-Z0-9_]*)+$')
+        && request.resource.data.packageName.size() <= 150
+        && (!('optInUrl' in request.resource.data)
+            || request.resource.data.optInUrl.matches('^https://play[.]google[.]com/apps/testing/[a-zA-Z0-9_.]+/?$'))
+        && (!('shortDesc' in request.resource.data)
+            || (request.resource.data.shortDesc is string && request.resource.data.shortDesc.size() <= 300))
+        && (!('category' in request.resource.data)
+            || (request.resource.data.category is string && request.resource.data.category.size() <= 40));
+      // Owner edits content only; status changes go through Functions (pause, publish, ...).
+      allow update: if canWrite() && resource.data.ownerUid == request.auth.uid
+        && onlyChanges(['name', 'iconUrl', 'versionName', 'shortDesc', 'instructions',
+                        'category', 'optInUrl', 'playUrl']);
+      allow delete: if false;
+    }
+    match /campaigns/{campaignId} {
+      allow read: if signedIn() && (resource.data.ownerUid == request.auth.uid || isStaff());
+      allow write: if false;
+    }
+
+    // ---------- tests (Functions write) ----------
+    match /tests/{testId} {
+      allow read: if signedIn()
+        && (resource.data.testerUid == request.auth.uid
+            || resource.data.ownerUid == request.auth.uid
+            || isStaff());
+      allow write: if false;
+
+      match /days/{n} {
+        function parent() {
+          return get(/databases/$(database)/documents/tests/$(testId)).data;
+        }
+        allow read: if signedIn()
+          && (parent().testerUid == request.auth.uid
+              || parent().ownerUid == request.auth.uid
+              || isStaff());
+        allow write: if false;
+      }
+    }
+
+    // ---------- feedback ----------
+    match /feedback/{id} {
+      allow read: if signedIn()
+        && (resource.data.testerUid == request.auth.uid
+            || resource.data.ownerUid == request.auth.uid
+            || isStaff());
+      // Reward (+2) is paid by a Function on the first feedback per app, not here.
+      allow create: if canWrite()
+        && request.resource.data.testerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(
+          ['testId', 'appId', 'testerUid', 'ownerUid', 'rating', 'tags', 'text', 'imageUrl', 'createdAt'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.tags is list && request.resource.data.tags.size() <= 5
+        && request.resource.data.text is string && request.resource.data.text.size() <= 1000
+        && exists(/databases/$(database)/documents/tests/$(request.resource.data.testId))
+        && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.testerUid == request.auth.uid
+        // appId and ownerUid must be the test's own, so feedback cannot be sent to someone else.
+        && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.appId == request.resource.data.appId
+        && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.ownerUid == request.resource.data.ownerUid;
+      allow update, delete: if false;
+    }
+
+    // ---------- reports ----------
+    match /reports/{id} {
+      allow read: if signedIn() && (resource.data.reporterUid == request.auth.uid || isStaff());
+      allow create: if canWrite()
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.status == 'open'
+        && request.resource.data.targetType in ['app', 'tester']
+        && request.resource.data.keys().hasOnly(
+          ['reporterUid', 'targetType', 'targetId', 'reason', 'comment', 'status', 'createdAt'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.reason in ['spam', 'fake', 'inappropriate', 'not_working', 'fraud', 'fake_activity', 'other']
+        && request.resource.data.targetId is string && request.resource.data.targetId.size() <= 160
+        && (!('comment' in request.resource.data)
+            || (request.resource.data.comment is string && request.resource.data.comment.size() <= 1000));
+      allow update: if isStaff();
+      allow delete: if false;
+    }
+
+    // ---------- published apps and public counters (Functions write) ----------
+    match /published/{appId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /stats/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ---------- config (public read, superadmin write) ----------
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isSuperadmin();
+    }
+
+    // ---------- push jobs (admin app reads, Functions write) ----------
+    match /pushJobs/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    // ---------- audit log (Functions write) ----------
+    match /auditLogs/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+  }
+}
