@@ -244,6 +244,16 @@
     <string name="settings_open_system">Manage</string>
     <string name="settings_version">Version %1$s</string>
     <string name="settings_privacy">Privacy policy</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_delete_account">Delete account</string>
+    <string name="settings_delete_title">Delete your account?</string>
+    <string name="settings_delete_body">Your profile, Coin14 balance, notifications and active tests will be deleted and your apps removed from the list. This cannot be undone. Purchased Coin14 are not refunded.</string>
+    <string name="settings_delete_confirm">Delete</string>
+    <string name="settings_delete_cancel">Cancel</string>
+    <string name="settings_deleting">Deleting account…</string>
+    <string name="settings_deleted">Account deleted.</string>
+    <string name="settings_delete_failed">Could not delete. Check your connection and try again.</string>
     <string name="feature_title">Featured placement</string>
     <string name="feature_hint">Your app appears in the Featured row on the home screen, so testers join faster.</string>
     <string name="feature_active">Featured until %1$s. Tap again to extend.</string>

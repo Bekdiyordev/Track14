@@ -244,6 +244,16 @@
     <string name="settings_open_system">Настроить</string>
     <string name="settings_version">Версия %1$s</string>
     <string name="settings_privacy">Политика конфиденциальности</string>
+    <string name="settings_account">Аккаунт</string>
+    <string name="settings_sign_out">Выйти</string>
+    <string name="settings_delete_account">Удалить аккаунт</string>
+    <string name="settings_delete_title">Удалить аккаунт?</string>
+    <string name="settings_delete_body">Профиль, баланс Coin14, уведомления и активные тесты будут удалены, ваши приложения уйдут из списка. Это нельзя отменить. Купленные Coin14 не возвращаются.</string>
+    <string name="settings_delete_confirm">Удалить</string>
+    <string name="settings_delete_cancel">Отмена</string>
+    <string name="settings_deleting">Удаляем аккаунт…</string>
+    <string name="settings_deleted">Аккаунт удалён.</string>
+    <string name="settings_delete_failed">Не удалось удалить. Проверьте интернет и попробуйте ещё раз.</string>
     <string name="feature_title">Продвижение в топ</string>
     <string name="feature_hint">Приложение появится в ряду «В топе» на главной, и тестеры наберутся быстрее.</string>
     <string name="feature_active">В топе до %1$s. Нажмите ещё раз, чтобы продлить.</string>

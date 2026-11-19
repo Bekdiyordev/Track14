@@ -85,6 +85,8 @@ class AuthViewModelTest {
 
         override val session: Flow<Session> = sessionFlow
 
+        override suspend fun deleteAccount(): DomainResult<Unit> = DomainResult.Success(Unit)
+
         override suspend fun signInWithGoogle(idToken: String): DomainResult<Session.SignedIn> {
             lastToken = idToken
             return result

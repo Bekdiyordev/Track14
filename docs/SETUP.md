@@ -66,3 +66,20 @@ The admin app lives in this project as a separate Android module with its own pa
 20. Deploy the new indexes: `firebase deploy --only firestore:indexes` (apps and reports by status).
 21. In Android Studio choose the `admin` run configuration and sign in with the superadmin account
     from step 16.
+
+# Setup: config, web pages, store listing
+
+22. Starting config (once, after the first functions deploy):
+
+        cd firebase/functions && npm run build && node lib/scripts/seedConfig.js
+
+    Writes `config/app_version`, `support`, `flags`, `economy` only where missing
+    (`--force` overwrites). Later changes go through the admin app.
+23. Web pages: replace every `CONTACT_EMAIL` in `firebase/hosting/privacy/index.html` and
+    `firebase/hosting/delete-account/index.html` with your support address, then
+    `firebase deploy --only hosting`. Pages: `https://track14-c2822.web.app/privacy` (already
+    linked in the app) and `/delete-account`.
+24. `firebase deploy --only firestore:indexes` also turns on the TTL policy that removes audit
+    entries after a year (`auditLogs.expireAt`), as the privacy policy says.
+25. Play Console listing, Data safety and Usage Access declaration: copy from
+    `docs/STORE_LISTING.md`.

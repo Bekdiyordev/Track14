@@ -41,6 +41,9 @@ interface AuthRepository {
     suspend fun signInWithGoogle(idToken: String): DomainResult<Session.SignedIn>
 
     suspend fun signOut()
+
+    /** Deletes the account and its data on the server (Play requirement), then signs out. */
+    suspend fun deleteAccount(): DomainResult<Unit>
 }
 
 /** Creates the `users/{uid}` profile on first sign-in. Safe to call on every sign-in. */

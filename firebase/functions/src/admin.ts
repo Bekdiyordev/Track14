@@ -26,9 +26,13 @@ export async function requireRole(req: CallableRequest<unknown>, allowed: readon
 }
 
 /** Every admin action leaves an audit record (read-only for staff in the rules). */
+/** Audit entries are removed by a Firestore TTL policy on `expireAt` (privacy policy: up to 1 year). */
+export const AUDIT_RETENTION_MS = 365 * 86_400_000;
+export const auditExpiry = (now = Date.now()) => new Date(now + AUDIT_RETENTION_MS);
+
 function audit(tx: Transaction | null, actor: string, action: string, target: string, details: Record<string, unknown>) {
   const ref = db().collection("auditLogs").doc();
-  const entry = { actor, action, target, details, createdAt: FieldValue.serverTimestamp() };
+  const entry = { actor, action, target, details, createdAt: FieldValue.serverTimestamp(), expireAt: auditExpiry() };
   if (tx) tx.set(ref, entry);
   else return ref.set(entry);
   return undefined;

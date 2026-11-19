@@ -249,7 +249,17 @@
     <string name="settings_open_system">Sozlash</string>
     <string name="settings_version">Versiya %1$s</string>
     <string name="settings_privacy">Maxfiylik siyosati</string>
-    <string name="privacy_url" translatable="false">https://track14.uz/privacy</string>
+    <string name="settings_account">Akkaunt</string>
+    <string name="settings_sign_out">Chiqish</string>
+    <string name="settings_delete_account">Akkauntni o\'chirish</string>
+    <string name="settings_delete_title">Akkaunt o\'chirilsinmi?</string>
+    <string name="settings_delete_body">Profil, Coin14 balansi, bildirishnomalar va faol testlaringiz o\'chiriladi, ilovalaringiz ro\'yxatdan olinadi. Buni qaytarib bo\'lmaydi. Sotib olingan Coin14 qaytarilmaydi.</string>
+    <string name="settings_delete_confirm">O\'chirish</string>
+    <string name="settings_delete_cancel">Bekor qilish</string>
+    <string name="settings_deleting">Akkaunt o\'chirilmoqda…</string>
+    <string name="settings_deleted">Akkaunt o\'chirildi.</string>
+    <string name="settings_delete_failed">O\'chirib bo\'lmadi. Internetni tekshirib, qayta urinib ko\'ring.</string>
+    <string name="privacy_url" translatable="false">https://track14-c2822.web.app/privacy</string>
     <string name="feature_title">Topga chiqarish</string>
     <string name="feature_hint">Ilovangiz bosh sahifadagi \"Topdagilar\" qatorida ko\'rinadi va testerlar tezroq yig\'iladi.</string>
     <string name="feature_active">Topda: %1$s gacha. Yana bossangiz, muddat uzayadi.</string>
