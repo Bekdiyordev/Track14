@@ -25,8 +25,16 @@ class FirestoreConfigRepository @Inject constructor(private val firestore: Fireb
     override fun flags(): Flow<FeatureFlags> = doc("config/flags", ::flagsFrom)
 
     override fun blockedReason(uid: String): Flow<String?> = doc("users/$uid") { data ->
-        if (data?.get("blocked") == true) (data["blockedReason"] as? String).orEmpty() else null
+        blockedReasonFrom(data, System.currentTimeMillis())
     }
+}
+
+/** Reason while a block is in force; a temporary block past `blockedUntil` no longer counts. */
+internal fun blockedReasonFrom(data: Map<String, Any?>?, nowMillis: Long): String? {
+    if (data?.get("blocked") != true) return null
+    val until = (data["blockedUntil"] as? com.google.firebase.Timestamp)?.toDate()?.time
+    if (until != null && until <= nowMillis) return null
+    return (data["blockedReason"] as? String).orEmpty()
 }
 
 private fun Map<String, Any?>.long(key: String, fallback: Long) = (this[key] as? Number)?.toLong()?.takeIf { it > 0 } ?: fallback

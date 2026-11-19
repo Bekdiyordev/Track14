@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.AnimatedProgress
 import uz.beko404.track14.core.designsystem.AppTile
@@ -52,7 +52,7 @@ fun MyAppsRoute(
     val tokenClient = rememberGoogleIdTokenClient()
 
     when (val s = state) {
-        MyAppsUiState.Loading -> Centered { CircularProgressIndicator() }
+        MyAppsUiState.Loading -> SkeletonList(count = 3, modifier = Modifier.padding(20.dp))
         MyAppsUiState.SignedOut -> Centered {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.myapps_signed_out), style = MaterialTheme.typography.bodyLarge)

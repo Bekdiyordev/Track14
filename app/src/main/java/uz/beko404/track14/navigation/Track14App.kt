@@ -12,6 +12,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Modifier
 import uz.beko404.track14.core.settings.ThemeMode
 import uz.beko404.track14.feature.settings.SettingsRoute
+import uz.beko404.track14.feature.testdetail.TestDetailRoute
+import uz.beko404.track14.feature.testdetail.TestDetailViewModel
+import uz.beko404.track14.feature.testdetail.TesterDetailRoute
+import uz.beko404.track14.feature.testdetail.TesterDetailViewModel
 import uz.beko404.track14.feature.settings.SettingsViewModel
 import uz.beko404.track14.feature.welcome.LanguageScreen
 import uz.beko404.track14.feature.welcome.OnboardingScreen
@@ -168,7 +172,19 @@ fun Track14App(
                     )
                 }
                 composable(TopLevelDestination.MyTests.route) {
-                    MyTestsRoute(onFeedback = { id -> navController.navigate("$FEEDBACK_ROUTE/$id") })
+                    MyTestsRoute(
+                        onFeedback = { id -> navController.navigate("$FEEDBACK_ROUTE/$id") },
+                        onOpenTest = { id -> navController.navigate("$TEST_DETAIL_ROUTE/$id") },
+                    )
+                }
+                composable(
+                    route = "$TEST_DETAIL_ROUTE/{${TestDetailViewModel.ARG_TEST_ID}}",
+                    arguments = listOf(navArgument(TestDetailViewModel.ARG_TEST_ID) { type = NavType.StringType }),
+                ) {
+                    TestDetailRoute(
+                        onBack = { navController.popBackStack() },
+                        onFeedback = { id -> navController.navigate("$FEEDBACK_ROUTE/$id") },
+                    )
                 }
                 composable(
                     route = "$FEEDBACK_ROUTE/{${FeedbackViewModel.ARG_TEST_ID}}",
@@ -213,10 +229,23 @@ fun Track14App(
                 composable(
                     route = "$DASHBOARD_ROUTE/{$ARG_APP_ID}",
                     arguments = listOf(navArgument(ARG_APP_ID) { type = NavType.StringType }),
-                ) {
+                ) { entry ->
                     DashboardRoute(
                         onBack = { navController.popBackStack() },
                         onReportTester = { testId -> navController.navigate("$REPORT_ROUTE/tester/$testId") },
+                        onOpenTester = { testId -> navController.navigate("$TESTER_DETAIL_ROUTE/${entry.arguments?.getString(ARG_APP_ID)}/$testId") },
+                    )
+                }
+                composable(
+                    route = "$TESTER_DETAIL_ROUTE/{${TesterDetailViewModel.ARG_APP_ID}}/{${TesterDetailViewModel.ARG_TEST_ID}}",
+                    arguments = listOf(
+                        navArgument(TesterDetailViewModel.ARG_APP_ID) { type = NavType.StringType },
+                        navArgument(TesterDetailViewModel.ARG_TEST_ID) { type = NavType.StringType },
+                    ),
+                ) {
+                    TesterDetailRoute(
+                        onBack = { navController.popBackStack() },
+                        onReport = { testId -> navController.navigate("$REPORT_ROUTE/tester/$testId") },
                     )
                 }
                 composable(TopLevelDestination.Profile.route) {
@@ -237,6 +266,8 @@ fun Track14App(
 }
 
 private const val APP_DETAIL_ROUTE = "app"
+private const val TEST_DETAIL_ROUTE = "test"
+private const val TESTER_DETAIL_ROUTE = "tester"
 private const val JOIN_ROUTE = "join"
 private const val ADD_APP_ROUTE = "add_app"
 private const val PLAN_ROUTE = "plan"

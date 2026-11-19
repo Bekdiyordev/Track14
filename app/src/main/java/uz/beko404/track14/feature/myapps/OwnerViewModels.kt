@@ -1,5 +1,6 @@
 package uz.beko404.track14.feature.myapps
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import uz.beko404.track14.core.device.ApkReadResult
+import uz.beko404.track14.core.device.ApkReader
 import uz.beko404.track14.domain.model.AppIds
 import uz.beko404.track14.domain.model.CampaignTester
 import uz.beko404.track14.domain.model.Coins
@@ -78,14 +81,25 @@ data class AddAppUiState(
     val saving: Boolean = false,
     val error: DomainError? = null,
     val createdAppId: String? = null,
+    val apk: ApkState = ApkState.None,
 ) {
     val errors: Set<NewAppField> get() = if (showErrors) NewAppRules.errors(form) else emptySet()
+}
+
+/** Prefill from an APK: reading, done (shows the file's package and version) or failed. */
+sealed interface ApkState {
+    data object None : ApkState
+    data object Reading : ApkState
+    data class Filled(val packageName: String, val versionName: String) : ApkState
+    data object TooLarge : ApkState
+    data object Unreadable : ApkState
 }
 
 @HiltViewModel
 class AddAppViewModel @Inject constructor(
     private val auth: AuthRepository,
     private val owner: OwnerRepository,
+    private val apkReader: ApkReader,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AddAppUiState())
     val state: StateFlow<AddAppUiState> = _state.asStateFlow()
@@ -101,6 +115,31 @@ class AddAppViewModel @Inject constructor(
     }
 
     fun onOptIn(v: String) = _state.update { it.copy(form = it.form.copy(optInUrl = v.take(300)), optInEdited = true) }
+
+    /** Fills name, package and version from the picked APK; fields stay editable afterwards. */
+    fun onApkPicked(uri: Uri?) {
+        if (uri == null || _state.value.apk == ApkState.Reading) return
+        _state.update { it.copy(apk = ApkState.Reading) }
+        viewModelScope.launch {
+            when (val r = apkReader.read(uri)) {
+                is ApkReadResult.Ok -> {
+                    onPackage(r.info.packageName)
+                    _state.update { s ->
+                        s.copy(
+                            form = s.form.copy(
+                                name = r.info.name.ifBlank { s.form.name },
+                                versionName = r.info.versionName,
+                                fromApk = true,
+                            ),
+                            apk = ApkState.Filled(r.info.packageName, r.info.versionName),
+                        )
+                    }
+                }
+                ApkReadResult.TooLarge -> _state.update { it.copy(apk = ApkState.TooLarge) }
+                ApkReadResult.Unreadable -> _state.update { it.copy(apk = ApkState.Unreadable) }
+            }
+        }
+    }
 
     fun submit() {
         val s = _state.value

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.Track14Colors
 import uz.beko404.track14.domain.model.Feedback
@@ -222,7 +223,7 @@ fun NotificationsRoute(onBack: () -> Unit, viewModel: NotificationsViewModel = h
         BackHeader(stringResource(R.string.notifications_title), onBack)
         val list = items
         when {
-            list == null -> Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            list == null -> SkeletonList(count = 4, modifier = Modifier.padding(20.dp))
             list.isEmpty() -> Text(
                 stringResource(R.string.notifications_empty),
                 modifier = Modifier.padding(20.dp),

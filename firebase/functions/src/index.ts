@@ -14,10 +14,12 @@ export {
   adminAdjustCoins,
   adminBlockUser,
   adminCancelPush,
+  adminDeleteUser,
   adminResolveReport,
   adminSendPush,
   adminSetConfig,
   adminSetRole,
   adminSuspendApp,
+  liftExpiredBlocks,
   dispatchPushes,
 } from "./admin";

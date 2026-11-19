@@ -72,17 +72,18 @@ class FirestoreOwnerRepository @Inject constructor(
         val clean = NewAppRules.normalize(app)
         val ref = firestore.collection("apps").document()
         ref.set(
-            mapOf(
-                "ownerUid" to uid,
-                "status" to AppStatus.DRAFT.wireName,
-                "createdAt" to FieldValue.serverTimestamp(),
-                "name" to clean.name,
-                "packageName" to clean.packageName,
-                "category" to clean.category,
-                "shortDesc" to clean.shortDesc,
-                "optInUrl" to clean.optInUrl,
-                "source" to "manual",
-            ),
+            buildMap {
+                put("ownerUid", uid)
+                put("status", AppStatus.DRAFT.wireName)
+                put("createdAt", FieldValue.serverTimestamp())
+                put("name", clean.name)
+                put("packageName", clean.packageName)
+                put("category", clean.category)
+                put("shortDesc", clean.shortDesc)
+                put("optInUrl", clean.optInUrl)
+                put("source", if (clean.fromApk) "apk" else "manual")
+                if (clean.versionName.isNotBlank()) put("versionName", clean.versionName.take(40))
+            },
         ).await()
         DomainResult.Success(ref.id)
     } catch (e: Exception) {
@@ -174,5 +175,10 @@ internal fun campaignTesterFrom(id: String, data: Map<String, Any?>, days: Map<I
         status = status,
         days = List(StreakRules.TEST_DAYS) { i -> days[i + 1] ?: DayStatus.PENDING },
         startedAtMillis = data["startedAt"].toMillis().takeIf { it > 0 },
+        name = (data["testerName"] as? String).orEmpty().take(40),
+        device = (data["testerDevice"] as? String).orEmpty().take(60),
+        reliability = (data["testerReliability"] as? Number)?.toInt()?.coerceIn(0, 100),
+        completedTests = (data["testerCompleted"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0,
+        timezone = data["timezone"] as? String ?: "UTC",
     )
 }

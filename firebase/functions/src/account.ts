@@ -2,7 +2,7 @@ import { getAuth } from "firebase-admin/auth";
 import { DocumentReference, FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { z } from "zod";
-import { auditExpiry } from "./admin";
+import { auditExpiry } from "./retention";
 import { parse } from "./guards";
 import { callableOptions } from "./options";
 
@@ -38,7 +38,12 @@ export const deleteAccount = onCall(callableOptions, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "sign_in_required");
   parse(DeleteAccount, req.data);
+  await deleteUserData(uid, uid);
+  return { ok: true };
+});
 
+/** Shared by deleteAccount (the user) and adminDeleteUser (a superadmin acting on a request). */
+export async function deleteUserData(uid: string, actor: string): Promise<void> {
   const userRef = db().collection("users").doc(uid);
   const [tests, apps, campaigns, feedback, tokens, inbox] = await Promise.all([
     db().collection("tests").where("testerUid", "==", uid).get(),
@@ -50,9 +55,16 @@ export const deleteAccount = onCall(callableOptions, async (req) => {
   ]);
 
   const writes: Write[] = [];
+  // The owner's copy of the tester's name and device goes with the account.
+  const anonymous = { testerName: "", testerDevice: "", testerReliability: null };
   for (const t of tests.docs) {
-    if (!closesTest(String(t.get("status")))) continue;
-    writes.push((b) => b.update(t.ref, { status: "left", endedReason: "account_deleted", endedAt: FieldValue.serverTimestamp() }));
+    if (!closesTest(String(t.get("status")))) {
+      writes.push((b) => b.update(t.ref, anonymous));
+      continue;
+    }
+    writes.push((b) =>
+      b.update(t.ref, { ...anonymous, status: "left", endedReason: "account_deleted", endedAt: FieldValue.serverTimestamp() }),
+    );
     const campaignId = t.get("campaignId");
     if (typeof campaignId === "string" && campaignId) {
       const ref = db().collection("campaigns").doc(campaignId);
@@ -74,8 +86,8 @@ export const deleteAccount = onCall(callableOptions, async (req) => {
   const audit = db().collection("auditLogs").doc();
   writes.push((b) =>
     b.set(audit, {
-      actor: uid,
-      action: "delete_account",
+      actor,
+      action: actor === uid ? "delete_account" : "admin_delete_account",
       target: uid,
       details: { tests: tests.size, apps: apps.size },
       createdAt: FieldValue.serverTimestamp(),
@@ -88,6 +100,8 @@ export const deleteAccount = onCall(callableOptions, async (req) => {
     writes.slice(i, i + BATCH).forEach((w) => w(batch));
     await batch.commit();
   }
-  await getAuth().deleteUser(uid);
-  return { ok: true };
-});
+  await getAuth().deleteUser(uid).catch((e: { code?: string }) => {
+    // Already gone (a retried request): the data steps above are idempotent.
+    if (e.code !== "auth/user-not-found") throw e;
+  });
+}

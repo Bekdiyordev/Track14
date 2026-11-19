@@ -1,5 +1,7 @@
 package uz.beko404.track14.feature.myapps
 
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,6 +85,7 @@ fun AddAppRoute(onBack: () -> Unit, onCreated: (String) -> Unit, viewModel: AddA
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.createdAppId) { state.createdAppId?.let(onCreated) }
     val errors = state.errors
+    val pickApk = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument(), viewModel::onApkPicked)
 
     Column(modifier = Modifier.fillMaxSize()) {
         BackHeader(stringResource(R.string.add_title), onBack)
@@ -90,6 +93,7 @@ fun AddAppRoute(onBack: () -> Unit, onCreated: (String) -> Unit, viewModel: AddA
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            ApkCard(state.apk, onPick = { pickApk.launch(arrayOf(APK_MIME)) })
             Field(state.form.name, viewModel::onName, R.string.add_name, NewAppField.NAME in errors, R.string.add_name_error)
             Field(
                 state.form.packageName, viewModel::onPackage, R.string.add_package, NewAppField.PACKAGE in errors,
@@ -121,6 +125,33 @@ fun AddAppRoute(onBack: () -> Unit, onCreated: (String) -> Unit, viewModel: AddA
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(16.dp),
             ) { Text(stringResource(R.string.add_continue)) }
+        }
+    }
+}
+
+private const val APK_MIME = "application/vnd.android.package-archive"
+
+@Composable
+private fun ApkCard(apk: ApkState, onPick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(stringResource(R.string.add_apk_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Text(
+            when (apk) {
+                ApkState.None, ApkState.Reading -> stringResource(R.string.add_apk_body)
+                is ApkState.Filled -> stringResource(R.string.add_apk_filled, apk.packageName, apk.versionName.ifBlank { "—" })
+                ApkState.TooLarge -> stringResource(R.string.add_apk_too_large)
+                ApkState.Unreadable -> stringResource(R.string.add_apk_unreadable)
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = if (apk is ApkState.TooLarge || apk is ApkState.Unreadable) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(onClick = onPick, enabled = apk != ApkState.Reading, shape = RoundedCornerShape(12.dp)) {
+            Text(stringResource(if (apk == ApkState.Reading) R.string.add_apk_reading else R.string.add_apk_pick))
         }
     }
 }
@@ -241,7 +272,12 @@ private fun PlanCard(plan: Plan, fee: Long, reward: Long, selected: Boolean, onC
 // ---------------------------------------------------------------- dashboard
 
 @Composable
-fun DashboardRoute(onBack: () -> Unit, onReportTester: (String) -> Unit, viewModel: DashboardViewModel = hiltViewModel()) {
+fun DashboardRoute(
+    onBack: () -> Unit,
+    onReportTester: (String) -> Unit,
+    onOpenTester: (String) -> Unit = {},
+    viewModel: DashboardViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val economy by viewModel.economyConfig.collectAsStateWithLifecycle()
     var confirmPublish by remember { mutableStateOf(false) }
@@ -318,14 +354,25 @@ fun DashboardRoute(onBack: () -> Unit, onReportTester: (String) -> Unit, viewMod
                 items(state.testers.size) { i ->
                     val t = state.testers[i]
                     Card(
+                        onClick = { onOpenTester(t.testId) },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     ) {
                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row {
-                                Text(stringResource(R.string.dashboard_tester_n, i + 1), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                                Text(
+                                    t.name.ifBlank { stringResource(R.string.dashboard_tester_n, i + 1) },
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                )
                                 Text(
                                     stringResource(R.string.dashboard_days_passed, t.days.count { it == DayStatus.PASSED }),
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (t.device.isNotBlank() || t.reliability != null) {
+                                Text(
+                                    listOfNotNull(t.device.takeIf { it.isNotBlank() }, t.reliability?.let { "$it%" }).joinToString(" · "),
                                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }

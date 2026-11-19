@@ -77,6 +77,7 @@ fun errorText(e: DomainError): String = when (e) {
         "invalid_input" -> "Qiymatlar noto'g'ri, tekshirib qayta kiriting"
         "cannot_block_self" -> "O'zingizni bloklay olmaysiz"
         "cannot_demote_self" -> "O'z superadmin rolingizni olib tashlay olmaysiz"
+        "cannot_delete_self" -> "O'z akkauntingizni bu yerdan o'chira olmaysiz"
         "not_scheduled" -> "Bu push allaqachon yuborilgan yoki bekor qilingan"
         "invalid_send_at" -> "Vaqt hozirdan 30 kungacha bo'lishi kerak"
         else -> "Server rad etdi: ${e.reason}"

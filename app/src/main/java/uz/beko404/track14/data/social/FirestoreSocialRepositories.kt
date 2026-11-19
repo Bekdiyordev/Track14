@@ -130,6 +130,7 @@ internal fun feedbackFrom(id: String, data: Map<String, Any?>): Feedback? {
         tags = (data["tags"] as? List<*>).orEmpty().mapNotNull { FeedbackTag.fromWire(it as? String) }.toSet(),
         text = data["text"] as? String ?: "",
         createdAtMillis = data["createdAt"].toMillis(),
+        testId = data["testId"] as? String ?: "",
     )
 }
 

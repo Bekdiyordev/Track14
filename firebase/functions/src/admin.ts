@@ -6,11 +6,15 @@ import { logger } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { z } from "zod";
+import { deleteUserData } from "./account";
 import { docId, parse } from "./guards";
 import { applyEntry, readEntry } from "./ledger";
 import { messages, notifySafely, plain } from "./notify";
 import { callableOptions, REGION } from "./options";
 import { ledgerKey } from "./rules";
+import { auditExpiry } from "./retention";
+
+export { AUDIT_RETENTION_MS, auditExpiry } from "./retention";
 
 export type Role = "superadmin" | "moderator" | "support";
 const db = () => getFirestore();
@@ -26,9 +30,6 @@ export async function requireRole(req: CallableRequest<unknown>, allowed: readon
 }
 
 /** Every admin action leaves an audit record (read-only for staff in the rules). */
-/** Audit entries are removed by a Firestore TTL policy on `expireAt` (privacy policy: up to 1 year). */
-export const AUDIT_RETENTION_MS = 365 * 86_400_000;
-export const auditExpiry = (now = Date.now()) => new Date(now + AUDIT_RETENTION_MS);
 
 function audit(tx: Transaction | null, actor: string, action: string, target: string, details: Record<string, unknown>) {
   const ref = db().collection("auditLogs").doc();
@@ -55,7 +56,34 @@ export const adminSetRole = onCall(callableOptions, async (req) => {
 
 // ------------------------------------------------------------------ users
 
-const BlockUser = z.object({ uid: uidSchema, blocked: z.boolean(), reason: z.string().max(300).default("") }).strict();
+const BlockUser = z
+  .object({
+    uid: uidSchema,
+    blocked: z.boolean(),
+    reason: z.string().max(300).default(""),
+    // null = until unblocked by hand
+    days: z.union([z.literal(7), z.literal(30)]).nullable().default(null),
+  })
+  .strict();
+
+/** End of a temporary block, or null for a permanent one. */
+export function blockEnd(days: number | null, nowMs: number): Date | null {
+  return days === null ? null : new Date(nowMs + days * 86_400_000);
+}
+
+/** Lifts a block: the user doc, their apps' catalog flag and the audit entry, in one transaction. */
+async function setBlocked(uid: string, blocked: boolean, reason: string, until: Date | null, actor: string): Promise<void> {
+  const apps = await db().collection("apps").where("ownerUid", "==", uid).get();
+  await db().runTransaction(async (tx) => {
+    tx.set(
+      db().collection("users").doc(uid),
+      { blocked, blockedReason: blocked ? reason : null, blockedUntil: blocked ? until : null },
+      { merge: true },
+    );
+    apps.docs.forEach((a) => tx.update(a.ref, { ownerBlocked: blocked }));
+    audit(tx, actor, blocked ? "block_user" : "unblock_user", uid, { reason, until: until?.toISOString() ?? null });
+  });
+}
 
 /**
  * Blocking: the user can no longer act (guards), their sessions are revoked, their apps leave
@@ -63,15 +91,37 @@ const BlockUser = z.object({ uid: uidSchema, blocked: z.boolean(), reason: z.str
  */
 export const adminBlockUser = onCall(callableOptions, async (req) => {
   const actor = await requireRole(req, ["superadmin", "moderator"]);
-  const { uid, blocked, reason } = parse(BlockUser, req.data);
+  const { uid, blocked, reason, days } = parse(BlockUser, req.data);
   if (uid === actor.uid) throw new HttpsError("failed-precondition", "cannot_block_self");
-  const apps = await db().collection("apps").where("ownerUid", "==", uid).get();
-  await db().runTransaction(async (tx) => {
-    tx.set(db().collection("users").doc(uid), { blocked, blockedReason: blocked ? reason : null }, { merge: true });
-    apps.docs.forEach((a) => tx.update(a.ref, { ownerBlocked: blocked }));
-    audit(tx, actor.uid, blocked ? "block_user" : "unblock_user", uid, { reason });
-  });
+  await setBlocked(uid, blocked, reason, blocked ? blockEnd(days, Date.now()) : null, actor.uid);
   if (blocked) await getAuth().revokeRefreshTokens(uid);
+  return { ok: true };
+});
+
+/** Hourly: temporary blocks that ran out are lifted the same way an admin would lift them. */
+export const liftExpiredBlocks = onSchedule({ schedule: "every 60 minutes", region: REGION, timeZone: "UTC" }, async () => {
+  const expired = await db()
+    .collection("users")
+    .where("blocked", "==", true)
+    .where("blockedUntil", "<=", new Date())
+    .limit(200)
+    .get();
+  for (const u of expired.docs) {
+    await setBlocked(u.id, false, "", null, "system");
+  }
+  if (!expired.empty) logger.info("lifted expired blocks", { count: expired.size });
+});
+
+/**
+ * Deletion asked for outside the app (the /delete-account page, by e-mail). Superadmin only;
+ * the same steps as deleteAccount, recorded with the admin as the actor.
+ */
+export const adminDeleteUser = onCall(callableOptions, async (req) => {
+  const actor = await requireRole(req, ["superadmin"]);
+  const { uid, confirm } = parse(z.object({ uid: uidSchema, confirm: z.literal("DELETE") }).strict(), req.data);
+  void confirm;
+  if (uid === actor.uid) throw new HttpsError("failed-precondition", "cannot_delete_self");
+  await deleteUserData(uid, actor.uid);
   return { ok: true };
 });
 

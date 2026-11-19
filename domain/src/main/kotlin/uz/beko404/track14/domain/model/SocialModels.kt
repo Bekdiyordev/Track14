@@ -20,6 +20,7 @@ data class Feedback(
     val tags: Set<FeedbackTag>,
     val text: String,
     val createdAtMillis: Long,
+    val testId: String = "",
 )
 
 /** Same limits as firestore.rules (feedback). */

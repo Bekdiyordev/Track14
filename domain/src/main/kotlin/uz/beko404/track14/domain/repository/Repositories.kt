@@ -8,6 +8,7 @@ import uz.beko404.track14.domain.model.NewFeedback
 import uz.beko404.track14.domain.model.ReportReason
 import uz.beko404.track14.domain.model.ReportTarget
 import uz.beko404.track14.domain.model.Coins
+import uz.beko404.track14.domain.model.DayRecord
 import uz.beko404.track14.domain.model.EconomyConfig
 import uz.beko404.track14.domain.model.FeatureFlags
 import uz.beko404.track14.domain.model.SupportConfig
@@ -115,6 +116,9 @@ interface TestsRepository {
     suspend fun verifyDay(testId: String, seconds: Int, mode: CheckMode): DomainResult<DayCheckResult>
 
     suspend fun leaveTest(testId: String): DomainResult<Unit>
+
+    /** Day documents of one test; readable by its tester and its owner. */
+    fun observeDayRecords(testId: String): Flow<List<DayRecord>>
 }
 
 /** Owner side. Drafts are written by the client; everything after that by Functions. */

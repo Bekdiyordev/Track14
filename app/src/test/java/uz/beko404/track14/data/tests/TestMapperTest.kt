@@ -6,6 +6,7 @@ import org.junit.Test
 import uz.beko404.track14.domain.model.Coins
 import uz.beko404.track14.domain.model.DayStatus
 import uz.beko404.track14.domain.model.TestStatus
+import uz.beko404.track14.domain.rules.CheckMode
 
 class TestMapperTest {
     private val base = mapOf(
@@ -43,5 +44,17 @@ class TestMapperTest {
         assertEquals(DayStatus.PASSED, dayStatusFrom("passed"))
         assertEquals(DayStatus.MISSED, dayStatusFrom("missed"))
         assertEquals(DayStatus.PENDING, dayStatusFrom(null))
+    }
+
+    @Test
+    fun `maps day records and drops bad ids`() {
+        val r = dayRecordFrom("3", mapOf("status" to "passed", "seconds" to 47L, "mode" to "fallback"))!!
+        assertEquals(3, r.day)
+        assertEquals(DayStatus.PASSED, r.status)
+        assertEquals(47, r.seconds)
+        assertEquals(CheckMode.FALLBACK, r.mode)
+        assertNull(dayRecordFrom("15", mapOf("status" to "passed")))
+        assertNull(dayRecordFrom("x", mapOf("status" to "passed")))
+        assertNull(dayRecordFrom("2", mapOf("status" to "missed"))!!.mode)
     }
 }

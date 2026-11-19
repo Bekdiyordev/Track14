@@ -21,8 +21,11 @@ service cloud.firestore {
     function isStaff() {
       return role() in ['superadmin', 'moderator', 'support'];
     }
+    // Same rule as isBlockActive() in guards.ts: a temporary block stops counting at blockedUntil.
     function isBlocked() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('blocked', false) == true;
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return user.get('blocked', false) == true
+        && (user.get('blockedUntil', null) == null || user.get('blockedUntil', null) > request.time);
     }
     function canWrite() {
       return signedIn() && !isBlocked();
@@ -120,7 +123,9 @@ service cloud.firestore {
         && (!('shortDesc' in request.resource.data)
             || (request.resource.data.shortDesc is string && request.resource.data.shortDesc.size() <= 300))
         && (!('category' in request.resource.data)
-            || (request.resource.data.category is string && request.resource.data.category.size() <= 40));
+            || (request.resource.data.category is string && request.resource.data.category.size() <= 40))
+        && (!('source' in request.resource.data) || request.resource.data.source in ['apk', 'manual'])
+        && optString(request.resource.data, 'versionName', 40);
       // Owner edits content only; status changes go through Functions (pause, publish, ...).
       allow update: if canWrite() && resource.data.ownerUid == request.auth.uid
         && onlyChanges(['name', 'iconUrl', 'versionName', 'shortDesc', 'instructions',

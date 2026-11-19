@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +41,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.AppTile
 import uz.beko404.track14.core.designsystem.Track14Colors
@@ -79,7 +79,7 @@ fun PublishedRoute(onBack: () -> Unit, viewModel: PublishedViewModel = hiltViewM
             item { TotalsCard(totals) }
             val list = apps
             when {
-                list == null -> item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+                list == null -> item { SkeletonList(count = 4) }
                 list.isEmpty() -> item {
                     Text(stringResource(R.string.published_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                 }

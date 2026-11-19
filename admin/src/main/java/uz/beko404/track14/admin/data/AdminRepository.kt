@@ -10,6 +10,8 @@ import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
+import uz.beko404.track14.admin.logic.AdminRules
+import uz.beko404.track14.admin.logic.DashboardMath
 import uz.beko404.track14.admin.logic.Role
 import uz.beko404.track14.domain.model.AppStatus
 import uz.beko404.track14.domain.model.TesterStats
@@ -44,11 +46,40 @@ class AdminRepository @Inject constructor(
 
     suspend fun dashboard(): DomainResult<DashboardCounts> = load {
         coroutineScope {
+            val today = Timestamp(java.util.Date(DashboardMath.startOfDay(System.currentTimeMillis())))
+            val weekAgo = Timestamp(java.util.Date(System.currentTimeMillis() - 7 * 86_400_000L))
             val users = async { count(db.collection("users")) }
+            val usersToday = async { count(db.collection("users").whereGreaterThanOrEqualTo("createdAt", today)) }
             val active = async { count(db.collection("campaigns").whereEqualTo("status", "active")) }
+            val newWeek = async { count(db.collection("campaigns").whereGreaterThanOrEqualTo("startedAt", weekAgo)) }
+            val tests = async { count(db.collection("tests").whereEqualTo("status", "active")) }
             val reports = async { count(db.collection("reports").whereEqualTo("status", "open")) }
+            val blocked = async { count(db.collection("users").whereEqualTo("blocked", true)) }
             val pushes = async { count(db.collection("pushJobs").whereEqualTo("status", "scheduled")) }
-            DashboardCounts(users.await(), active.await(), reports.await(), pushes.await())
+            val purchases = async {
+                db.collection("transactions").whereEqualTo("type", "purchase")
+                    .whereGreaterThanOrEqualTo("createdAt", today).limit(500).get().await().documents
+                    .map { (it.get("amount") as? Number)?.toLong() ?: 0L }
+            }
+            val flags = async { db.collection("config").document("flags").get().await().data.orEmpty() - "updatedAt" }
+            val recent = async {
+                db.collection("auditLogs").orderBy("createdAt", Query.Direction.DESCENDING).limit(3).get().await().documents.map(::auditFrom)
+            }
+            val bought = purchases.await()
+            DashboardCounts(
+                users = users.await(),
+                usersToday = usersToday.await(),
+                activeCampaigns = active.await(),
+                newCampaignsWeek = newWeek.await(),
+                activeTests = tests.await(),
+                openReports = reports.await(),
+                blockedUsers = blocked.await(),
+                purchasesToday = bought.size,
+                revenueTodayUsd = DashboardMath.revenueUsd(bought),
+                scheduledPushes = pushes.await(),
+                flags = flags.await(),
+                recentAudit = recent.await(),
+            )
         }
     }
 
@@ -71,8 +102,10 @@ class AdminRepository @Inject constructor(
                 db.collection("transactions").whereEqualTo("uid", uid)
                     .orderBy("createdAt", Query.Direction.DESCENDING).limit(30).get().await().documents
             }
+            val apps = async { count(db.collection("apps").whereEqualTo("ownerUid", uid)) }
             val user = userFrom(doc.await()) ?: throw NotFound
             UserDetail(
+                apps = apps.await().toInt(),
                 user = user,
                 balance = (wallet.await().get("balance") as? Number)?.toLong() ?: 0L,
                 ledger = ledger.await().map {
@@ -92,8 +125,14 @@ class AdminRepository @Inject constructor(
         coroutineScope {
             val app = async { db.collection("apps").document(appId).get().await() }
             val campaign = async { db.collection("campaigns").document(appId).get().await() }
+            val reports = async {
+                db.collection("reports").whereEqualTo("targetType", "app").whereEqualTo("targetId", appId)
+                    .orderBy("createdAt", Query.Direction.DESCENDING).limit(100).get().await().documents.map(::reportFrom)
+            }
             val a = app.await()
             val c = campaign.await()
+            val owner = a.getString("ownerUid")?.takeIf { AdminRules.isUid(it) }
+                ?.let { db.collection("users").document(it).get().await().getString("displayName") }.orEmpty()
             val stats = c.get("stats") as? Map<*, *>
             fun n(key: String) = (stats?.get(key) as? Number)?.toInt() ?: 0
             AppDetailAdmin(
@@ -105,24 +144,20 @@ class AdminRepository @Inject constructor(
                 completed = n("completed14"),
                 failed = n("failed") + n("left"),
                 suspendedReason = a.getString("suspendedReason").orEmpty(),
+                ownerName = owner,
+                reports = reports.await(),
             )
         }
     }
 
     suspend fun reports(status: String): DomainResult<List<Report>> = load {
         db.collection("reports").whereEqualTo("status", status)
-            .orderBy("createdAt", Query.Direction.DESCENDING).limit(100).get().await().documents.map {
-                Report(
-                    id = it.id,
-                    targetType = it.getString("targetType").orEmpty(),
-                    targetId = it.getString("targetId").orEmpty(),
-                    reason = it.getString("reason").orEmpty(),
-                    comment = it.getString("comment").orEmpty(),
-                    reporterUid = it.getString("reporterUid").orEmpty(),
-                    status = it.getString("status").orEmpty(),
-                    createdAtMillis = it.millis("createdAt"),
-                )
-            }
+            .orderBy("createdAt", Query.Direction.DESCENDING).limit(100).get().await().documents.map(::reportFrom)
+    }
+
+    /** Tester uid behind a test id, so a report on a tester can open their profile. */
+    suspend fun testerOf(testId: String): DomainResult<String> = load {
+        db.collection("tests").document(testId).get().await().getString("testerUid")?.takeIf { AdminRules.isUid(it) } ?: throw NotFound
     }
 
     suspend fun pushJobs(): DomainResult<List<PushJob>> = load {
@@ -140,9 +175,7 @@ class AdminRepository @Inject constructor(
     }
 
     suspend fun audit(): DomainResult<List<AuditEntry>> = load {
-        db.collection("auditLogs").orderBy("createdAt", Query.Direction.DESCENDING).limit(100).get().await().documents.map {
-            AuditEntry(it.id, it.getString("actor").orEmpty(), it.getString("action").orEmpty(), it.getString("target").orEmpty(), it.millis("createdAt"))
-        }
+        db.collection("auditLogs").orderBy("createdAt", Query.Direction.DESCENDING).limit(100).get().await().documents.map(::auditFrom)
     }
 
     /** Raw config document (`app_version`, `support`, `flags`, `economy`). */
@@ -153,8 +186,26 @@ class AdminRepository @Inject constructor(
     // ------------------------------------------------------------ actions (callables)
 
     suspend fun setRole(uid: String, role: Role?) = call("adminSetRole", mapOf("uid" to uid, "role" to role?.claim))
-    suspend fun blockUser(uid: String, blocked: Boolean, reason: String) =
-        call("adminBlockUser", mapOf("uid" to uid, "blocked" to blocked, "reason" to reason.trim()))
+    /** [days] 7 or 30 for a temporary block, null for a permanent one. */
+    suspend fun blockUser(uid: String, blocked: Boolean, reason: String, days: Int? = null) =
+        call("adminBlockUser", buildMap<String, Any> {
+            put("uid", uid)
+            put("blocked", blocked)
+            put("reason", reason.trim())
+            if (blocked && days != null) put("days", days)
+        })
+    suspend fun deleteUser(uid: String) = call("adminDeleteUser", mapOf("uid" to uid, "confirm" to "DELETE"))
+
+    /** Turns maintenance on or off and keeps the other flags as they are (the doc is replaced whole). */
+    suspend fun setMaintenance(on: Boolean, current: Map<String, Any?>): DomainResult<Unit> {
+        val value = buildMap<String, Any> {
+            put("maintenance", on)
+            put("newApps", current["newApps"] as? Boolean ?: true)
+            put("purchases", current["purchases"] as? Boolean ?: true)
+            (current["maintenanceMessage"] as? String)?.takeIf { it.isNotBlank() }?.let { put("maintenanceMessage", it.take(300)) }
+        }
+        return setConfig("flags", value)
+    }
     suspend fun adjustCoins(uid: String, amount: Int, reason: String) =
         call("adminAdjustCoins", mapOf("uid" to uid, "amount" to amount, "reason" to reason.trim()))
     suspend fun suspendApp(appId: String, suspend: Boolean, reason: String, refundFee: Boolean) =
@@ -209,6 +260,20 @@ class AdminRepository @Inject constructor(
 
 private fun DocumentSnapshot.millis(field: String): Long = (get(field) as? Timestamp)?.toDate()?.time ?: 0L
 
+private fun reportFrom(it: DocumentSnapshot) = Report(
+    id = it.id,
+    targetType = it.getString("targetType").orEmpty(),
+    targetId = it.getString("targetId").orEmpty(),
+    reason = it.getString("reason").orEmpty(),
+    comment = it.getString("comment").orEmpty(),
+    reporterUid = it.getString("reporterUid").orEmpty(),
+    status = it.getString("status").orEmpty(),
+    createdAtMillis = it.millis("createdAt"),
+)
+
+private fun auditFrom(it: DocumentSnapshot) =
+    AuditEntry(it.id, it.getString("actor").orEmpty(), it.getString("action").orEmpty(), it.getString("target").orEmpty(), it.millis("createdAt"))
+
 private fun userFrom(d: DocumentSnapshot): AdminUser? {
     if (!d.exists()) return null
     val stats = d.get("stats") as? Map<*, *>
@@ -222,6 +287,8 @@ private fun userFrom(d: DocumentSnapshot): AdminUser? {
         lang = d.getString("lang").orEmpty(),
         stats = TesterStats(n("testsStarted"), n("testsCompleted"), n("testsFailed"), n("testsLeft"), n("daysPassed")),
         createdAtMillis = d.millis("createdAt"),
+        deviceModel = d.getString("deviceModel").orEmpty(),
+        blockedUntilMillis = d.millis("blockedUntil"),
     )
 }
 

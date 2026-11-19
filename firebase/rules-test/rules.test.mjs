@@ -55,6 +55,12 @@ describe("users", () => {
     await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { lang: "ru" }));
   });
 
+  it("an expired temporary block no longer counts", async () => {
+    const past = new Date(Date.now() - 60_000);
+    await seed((db) => setDoc(doc(db, "users", ALICE), { displayName: "Alice", blocked: true, blockedUntil: past }));
+    await assertSucceeds(updateDoc(doc(as(ALICE), "users", ALICE), { lang: "ru" }));
+  });
+
   it("others cannot read a profile, staff can", async () => {
     await seed((db) => setDoc(doc(db, "users", ALICE), { displayName: "Alice" }));
     await assertFails(getDoc(doc(as(BOB), "users", ALICE)));

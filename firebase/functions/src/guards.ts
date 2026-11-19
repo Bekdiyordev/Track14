@@ -19,6 +19,18 @@ async function maintenanceOn(): Promise<boolean> {
   return flagsCache.maintenance;
 }
 
+/** A block is in force when set and either permanent or not yet past its end. */
+export function isBlockActive(blocked: unknown, untilMs: number | null, nowMs: number): boolean {
+  return blocked === true && (untilMs === null || untilMs > nowMs);
+}
+
+function millisOf(value: unknown): number | null {
+  if (value && typeof (value as { toMillis?: unknown }).toMillis === "function") {
+    return (value as { toMillis(): number }).toMillis();
+  }
+  return null;
+}
+
 /** Signed-in, not blocked, and the service is not in maintenance. Returns the uid. */
 export async function requireActiveUser(req: CallableRequest<unknown>): Promise<string> {
   const uid = req.auth?.uid;
@@ -26,7 +38,9 @@ export async function requireActiveUser(req: CallableRequest<unknown>): Promise<
   const staff = isStaff(req.auth?.token?.role);
   if (!staff && (await maintenanceOn())) throw new HttpsError("unavailable", "maintenance");
   const user = await getFirestore().collection("users").doc(uid).get();
-  if (user.get("blocked") === true) throw new HttpsError("permission-denied", "blocked");
+  if (isBlockActive(user.get("blocked"), millisOf(user.get("blockedUntil")), Date.now())) {
+    throw new HttpsError("permission-denied", "blocked");
+  }
   return uid;
 }
 

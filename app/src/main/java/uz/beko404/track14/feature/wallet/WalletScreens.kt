@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.billing.PackOffer
 import uz.beko404.track14.core.billing.PurchaseOutcome
@@ -208,7 +208,7 @@ fun ShopRoute(onBack: () -> Unit, viewModel: ShopViewModel = hiltViewModel()) {
         Column(modifier = Modifier.weight(1f).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.shop_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             when {
-                state.loading -> Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                state.loading -> SkeletonList(count = 4, modifier = Modifier.padding(vertical = 12.dp))
                 state.offers.isEmpty() -> Text(stringResource(R.string.shop_unavailable), style = MaterialTheme.typography.bodyMedium)
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(state.offers, key = { it.pack.productId }) { offer ->

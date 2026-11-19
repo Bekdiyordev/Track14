@@ -6,13 +6,36 @@ import { loadEconomy } from "./economy";
 import { messages, notifySafely } from "./notify";
 import { docId, parse, requireActiveUser } from "./guards";
 import { applyEntry, readEntry } from "./ledger";
-import { bumpStat } from "./stats";
+import { bumpStat, reliability } from "./stats";
 import { callableOptions } from "./options";
 import { dayNumber, isPassed, isValidTimeZone, ledgerKey, MIN_FOREGROUND_SECONDS, MIN_PASSED_TO_COMPLETE, TEST_DAYS } from "./rules";
 
 const db = () => getFirestore();
 const testRef = (id: string) => db().collection("tests").doc(id);
 const campaignRef = (id: string) => db().collection("campaigns").doc(id);
+
+/**
+ * What the owner may see about a tester (privacy policy: name, device, reliability):
+ * first name plus the initial of the last name, never the e-mail or uid.
+ */
+export function shortName(displayName: unknown): string {
+  const parts = String(displayName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  const first = parts[0].slice(0, 30);
+  return parts.length > 1 ? `${first} ${parts[parts.length - 1].charAt(0).toUpperCase()}.` : first;
+}
+
+/** Snapshot copied onto the test at join time; the owner can read tests but not users. */
+export function testerSnapshot(user: { get(field: string): unknown }): Record<string, unknown> {
+  const stats = (user.get("stats") ?? {}) as Record<string, number>;
+  const model = user.get("deviceModel");
+  return {
+    testerName: shortName(user.get("displayName")),
+    testerDevice: typeof model === "string" ? model.slice(0, 60) : "",
+    testerReliability: reliability(stats),
+    testerCompleted: Number(stats.testsCompleted ?? 0),
+  };
+}
 
 /** Deterministic id: one test per tester per campaign, so joining twice is a no-op. */
 export const testIdOf = (campaignId: string, uid: string) => `${campaignId}_${uid}`;
@@ -38,10 +61,11 @@ export const startTest = onCall(callableOptions, async (req) => {
     .get();
 
   const result = await db().runTransaction(async (tx) => {
-    const [campaign, test, app] = await Promise.all([
+    const [campaign, test, app, user] = await Promise.all([
       tx.get(campaignRef(campaignId)),
       tx.get(testRef(testId)),
       tx.get(db().collection("apps").doc(campaignId)),
+      tx.get(db().collection("users").doc(uid)),
     ]);
     if (test.exists) return { testId, status: test.get("status") as string, joined: null };
     if (!campaign.exists || campaign.get("status") !== "active") {
@@ -70,6 +94,7 @@ export const startTest = onCall(callableOptions, async (req) => {
       missedInRow: 0,
       lastPassedAt: null,
       feedbackRewarded: false,
+      ...testerSnapshot(user),
     });
     tx.update(campaignRef(campaignId), { "stats.joined": FieldValue.increment(1) });
     bumpStat(tx, uid, "testsStarted");

@@ -9,6 +9,9 @@ data class NewApp(
     val category: String,
     val shortDesc: String,
     val optInUrl: String,
+    /** Filled when the form was prefilled from an APK. */
+    val versionName: String = "",
+    val fromApk: Boolean = false,
 )
 
 enum class NewAppField { NAME, PACKAGE, CATEGORY, DESCRIPTION, OPT_IN }

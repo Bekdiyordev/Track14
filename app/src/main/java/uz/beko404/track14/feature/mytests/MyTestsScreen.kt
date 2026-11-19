@@ -21,7 +21,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.AppTile
 import uz.beko404.track14.core.designsystem.CoinAmount
@@ -62,6 +62,7 @@ import uz.beko404.track14.feature.messageRes
 @Composable
 fun MyTestsRoute(
     onFeedback: (String) -> Unit,
+    onOpenTest: (String) -> Unit = {},
     viewModel: MyTestsViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
 ) {
@@ -116,6 +117,7 @@ fun MyTestsRoute(
             onGrantUsage = { ExternalLinks.openUsageAccessSettings(context) },
             onLeave = { leaving = it },
             onFeedback = { onFeedback(it.id) },
+            onOpenTest = { onOpenTest(it.id) },
         )
         SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
     }
@@ -144,9 +146,10 @@ fun MyTestsScreen(
     onGrantUsage: () -> Unit,
     onLeave: (TesterTest) -> Unit,
     onFeedback: (TesterTest) -> Unit,
+    onOpenTest: (TesterTest) -> Unit = {},
 ) {
     when (state) {
-        MyTestsUiState.Loading -> Centered { CircularProgressIndicator() }
+        MyTestsUiState.Loading -> SkeletonList(count = 3, withDays = true, modifier = Modifier.padding(20.dp))
         MyTestsUiState.SignedOut -> Centered {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.mytests_signed_out), style = MaterialTheme.typography.bodyLarge)
@@ -169,7 +172,7 @@ fun MyTestsScreen(
                 item { TodayCard(state) }
                 if (!state.usageGranted) item { UsageBanner(onGrantUsage) }
                 items(state.active, key = { it.id }) { test ->
-                    TestCard(test, state.nowMillis, onOpenApp, onLeave, onFeedback, Modifier.animateItem())
+                    TestCard(test, state.nowMillis, onOpenApp, onLeave, onFeedback, onOpenTest, Modifier.animateItem())
                 }
             }
             if (state.finished.isNotEmpty()) {
@@ -177,7 +180,7 @@ fun MyTestsScreen(
                     Text(stringResource(R.string.mytests_finished), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
                 }
                 items(state.finished, key = { it.id }) { test ->
-                    TestCard(test, state.nowMillis, onOpenApp, onLeave, onFeedback, Modifier.animateItem())
+                    TestCard(test, state.nowMillis, onOpenApp, onLeave, onFeedback, onOpenTest, Modifier.animateItem())
                 }
             }
         }
@@ -235,11 +238,13 @@ private fun TestCard(
     onOpenApp: (TesterTest) -> Unit,
     onLeave: (TesterTest) -> Unit,
     onFeedback: (TesterTest) -> Unit,
+    onOpen: (TesterTest) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val today = test.dayNumber(nowMillis)
     val active = test.status == TestStatus.ACTIVE
     Card(
+        onClick = { onOpen(test) },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

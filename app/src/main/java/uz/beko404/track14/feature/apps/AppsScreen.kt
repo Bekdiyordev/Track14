@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.AnimatedProgress
 import uz.beko404.track14.core.designsystem.AppTile
@@ -94,7 +94,7 @@ fun AppsScreen(
             item { CategoryChips(state.categories, filter.category, onCategorySelected) }
         }
         when {
-            state.isLoading -> item { CenteredMessage { CircularProgressIndicator() } }
+            state.isLoading -> item { SkeletonList(count = 5) }
             state.error != null -> item { CenteredMessage { Text(stringResource(R.string.apps_error)) } }
             state.totalCount == 0 -> item { CenteredMessage { Text(stringResource(R.string.apps_empty)) } }
             else -> {

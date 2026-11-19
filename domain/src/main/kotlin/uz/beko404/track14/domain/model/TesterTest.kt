@@ -19,6 +19,7 @@ data class TesterTest(
     val days: List<DayStatus>,
     val ownerUid: String = "",
     val feedbackRewarded: Boolean = false,
+    val completionBonus: Coins = Coins(0),
 ) {
     init {
         require(days.size == StreakRules.TEST_DAYS) { "days must have ${StreakRules.TEST_DAYS} entries" }

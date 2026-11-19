@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import uz.beko404.track14.data.callFunction
 import uz.beko404.track14.data.toDomainError
 import uz.beko404.track14.domain.model.Coins
+import uz.beko404.track14.domain.model.DayRecord
 import uz.beko404.track14.domain.model.DayStatus
 import uz.beko404.track14.domain.model.PlayLinks
 import uz.beko404.track14.domain.model.TestStatus
@@ -81,6 +82,14 @@ class FirestoreTestsRepository @Inject constructor(
     override suspend fun leaveTest(testId: String): DomainResult<Unit> =
         functions.callFunction("leaveTest", mapOf("testId" to testId)) { }
 
+    override fun observeDayRecords(testId: String): Flow<List<DayRecord>> = callbackFlow {
+        val registration = firestore.collection("tests").document(testId).collection("days")
+            .addSnapshotListener { snapshot, _ ->
+                trySend(snapshot?.documents.orEmpty().mapNotNull { d -> d.data?.let { dayRecordFrom(d.id, it) } })
+            }
+        awaitClose { registration.remove() }
+    }
+
     private companion object {
         const val MAX_TESTS = 50L
     }
@@ -97,6 +106,18 @@ internal fun observeDays(firestore: FirebaseFirestore, testId: String): Flow<Map
             trySend(days)
         }
     awaitClose { registration.remove() }
+}
+
+/** Null for ids that are not day numbers 1..14. Seconds and mode are whatever the server stored. */
+internal fun dayRecordFrom(id: String, data: Map<String, Any?>): DayRecord? {
+    val n = id.toIntOrNull()?.takeIf { it in 1..StreakRules.TEST_DAYS } ?: return null
+    return DayRecord(
+        day = n,
+        status = dayStatusFrom(data["status"] as? String),
+        seconds = (data["seconds"] as? Number)?.toInt()?.coerceIn(0, 86_400),
+        mode = CheckMode.entries.firstOrNull { it.wireName == data["mode"] },
+        verifiedAtMillis = (data["verifiedAt"] as? Timestamp)?.toDate()?.time,
+    )
 }
 
 internal fun dayStatusFrom(value: String?): DayStatus = when (value) {
@@ -135,5 +156,6 @@ internal fun testerTestFrom(id: String, data: Map<String, Any?>, days: Map<Int, 
         days = List(StreakRules.TEST_DAYS) { i -> days[i + 1] ?: DayStatus.PENDING },
         ownerUid = data["ownerUid"] as? String ?: "",
         feedbackRewarded = data["feedbackRewarded"] == true,
+        completionBonus = Coins((data["completionBonus"] as? Number)?.toLong()?.coerceAtLeast(0) ?: 0L),
     )
 }

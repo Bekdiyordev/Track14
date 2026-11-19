@@ -136,7 +136,20 @@ private fun AdminNav(role: Role, onSignOut: () -> Unit) {
         },
     ) { padding ->
         NavHost(nav, startDestination = Tab.Home.route, modifier = Modifier.padding(padding)) {
-            composable(Tab.Home.route) { DashboardScreen(role, onOpenReports = { nav.navigate("reports") }) }
+            composable(Tab.Home.route) {
+                DashboardScreen(role, onOpen = { route ->
+                    val tab = Tab.entries.firstOrNull { it.route == route }
+                    if (tab != null) {
+                        nav.navigate(tab.route) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    } else {
+                        nav.navigate(route)
+                    }
+                })
+            }
             composable(Tab.Users.route) { UsersScreen(onOpen = { nav.navigate("user/$it") }) }
             composable(Tab.Apps.route) { AppsScreen(onOpen = { nav.navigate("app/$it") }) }
             composable(Tab.Push.route) { PushScreen(role) }
@@ -148,7 +161,7 @@ private fun AdminNav(role: Role, onSignOut: () -> Unit) {
                 )
             }
             composable("user/{$ARG_ID}", arguments = listOf(navArgument(ARG_ID) { type = NavType.StringType })) {
-                UserDetailScreen(role, onBack = back)
+                UserDetailScreen(role, onBack = back, onPush = { nav.navigate("pushTo/$it") })
             }
             composable("app/{$ARG_ID}", arguments = listOf(navArgument(ARG_ID) { type = NavType.StringType })) {
                 AppDetailScreen(role, onBack = back, onOpenOwner = { nav.navigate("user/$it") })
@@ -158,10 +171,16 @@ private fun AdminNav(role: Role, onSignOut: () -> Unit) {
             }
             composable("reports") {
                 ReportsScreen(role, onBack = back, onOpenTarget = { type, id ->
-                    if (type == "app") nav.navigate("app/$id")
+                    when (type) {
+                        "app" -> nav.navigate("app/$id")
+                        "user" -> nav.navigate("user/$id")
+                    }
                 })
             }
             composable("audit") { AuditScreen(onBack = back) }
+            composable("pushTo/{$ARG_ID}", arguments = listOf(navArgument(ARG_ID) { type = NavType.StringType })) {
+                PushScreen(role, onBack = back)
+            }
         }
     }
 }

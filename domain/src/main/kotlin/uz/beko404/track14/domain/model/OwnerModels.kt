@@ -52,13 +52,25 @@ data class OwnerApp(
         }.takeIf { status != AppStatus.SUSPENDED }.orEmpty()
 }
 
-/** One tester as the owner sees them: no name or email, only progress. */
+/**
+ * One tester as the owner sees them: progress plus the snapshot taken when they joined
+ * (short name, device, reliability). Never the e-mail or uid.
+ */
 data class CampaignTester(
     val testId: String,
     val status: TestStatus,
     val days: List<DayStatus>,
     val startedAtMillis: Long?,
-)
+    val name: String = "",
+    val device: String = "",
+    val reliability: Int? = null,
+    val completedTests: Int = 0,
+    val timezone: String = "UTC",
+) {
+    /** Two letters for the avatar circle, "?" when the name is unknown. */
+    val initials: String
+        get() = name.split(' ').filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }.ifEmpty { "?" }
+}
 
 /** Fixed categories (stored as shown; translations come with uz/ru/en). */
 object AppCategories {

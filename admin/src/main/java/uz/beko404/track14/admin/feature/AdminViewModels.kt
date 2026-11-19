@@ -107,6 +107,12 @@ class SessionViewModel @Inject constructor(private val repo: AdminRepository) : 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(private val repo: AdminRepository) : LoadingViewModel<DashboardCounts>() {
     override suspend fun fetch() = repo.dashboard()
+
+    /** Superadmin only (adminSetConfig); the screen asks for confirmation first. */
+    fun setMaintenance(on: Boolean) {
+        val flags = state.value.data?.flags ?: return
+        act(if (on) "Texnik ishlar rejimi yoqildi" else "Texnik ishlar rejimi o'chirildi") { repo.setMaintenance(on, flags) }
+    }
 }
 
 @HiltViewModel
@@ -135,6 +141,18 @@ class ReportsViewModel @Inject constructor(private val repo: AdminRepository) : 
     }
     fun resolve(id: String, status: String, note: String) =
         act(if (status == "resolved") "Shikoyat yopildi" else "Shikoyat rad etildi") { repo.resolveReport(id, status, note) }
+
+    /** Set once the uid behind a tester report is known; the screen opens that user. */
+    val openUser = MutableStateFlow<String?>(null)
+
+    fun openTester(testId: String) {
+        viewModelScope.launch {
+            when (val r = repo.testerOf(testId)) {
+                is DomainResult.Success -> openUser.value = r.value
+                is DomainResult.Failure -> fail(r.error)
+            }
+        }
+    }
 }
 
 @HiltViewModel
@@ -154,7 +172,22 @@ class UserViewModel @Inject constructor(
     override suspend fun fetch(): DomainResult<UserDetail> =
         if (AdminRules.isUid(uid)) repo.user(uid) else DomainResult.Failure(DomainError.NotFound)
 
-    fun block(reason: String) = act("Bloklandi") { repo.blockUser(uid, true, reason) }
+    /** [days] 7 or 30, null = permanent. */
+    fun block(reason: String, days: Int?) = act("Bloklandi") { repo.blockUser(uid, true, reason, days) }
+
+    /** Set after a superadmin deleted the account; the screen goes back. */
+    val deleted = MutableStateFlow(false)
+
+    fun delete() {
+        if (_state.value.busy) return
+        _state.update { it.copy(busy = true, error = null) }
+        viewModelScope.launch {
+            when (val r = repo.deleteUser(uid)) {
+                is DomainResult.Success -> deleted.value = true
+                is DomainResult.Failure -> _state.update { it.copy(busy = false, error = r.error) }
+            }
+        }
+    }
     fun unblock() = act("Blok olib tashlandi") { repo.blockUser(uid, false, "") }
     fun setRole(role: Role?) = act("Rol saqlandi") { repo.setRole(uid, role) }
 
@@ -177,6 +210,15 @@ class AppViewModel @Inject constructor(
 
     fun suspend(reason: String, refundFee: Boolean) = act("Ilova bloklandi") { repo.suspendApp(appId, true, reason, refundFee) }
     fun restore() = act("Ilova tiklandi") { repo.suspendApp(appId, false, "", false) }
+
+    /** "Rad etish": every open report on this app is dismissed with the same note. */
+    fun dismissReports(note: String) {
+        val open = state.value.data?.reports.orEmpty().filter { it.status == "open" }
+        if (open.isEmpty()) return
+        act("${open.size} ta shikoyat rad etildi") {
+            open.map { repo.resolveReport(it.id, "dismissed", note) }.firstOrNull { it is DomainResult.Failure } ?: DomainResult.Success(Unit)
+        }
+    }
 }
 
 // ---------------------------------------------------------------- push
@@ -191,8 +233,13 @@ data class PushForm(
 )
 
 @HiltViewModel
-class PushViewModel @Inject constructor(private val repo: AdminRepository) : LoadingViewModel<List<PushJob>>() {
-    val form = MutableStateFlow(PushForm())
+class PushViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val repo: AdminRepository,
+) : LoadingViewModel<List<PushJob>>() {
+    /** Opened from a user's page: the form starts addressed to that one uid. */
+    private val prefillUid: String? = savedStateHandle.get<String>(ARG_ID)?.takeIf { AdminRules.isUid(it) }
+    val form = MutableStateFlow(prefillUid?.let { PushForm(toAll = false, uids = it) } ?: PushForm())
     override suspend fun fetch() = repo.pushJobs()
 
     fun update(change: (PushForm) -> PushForm) = form.update(change)
