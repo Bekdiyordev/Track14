@@ -19,7 +19,7 @@ export type ConfigDoc = keyof typeof CONFIG_SCHEMAS;
 export function seedValues(): Record<ConfigDoc, Record<string, unknown>> {
   const values: Record<ConfigDoc, Record<string, unknown>> = {
     app_version: { minBuild: 1, latestBuild: 1 },
-    support: { groupUrl: "https://groups.google.com/g/track14-testers" },
+    support: { groupUrl: "https://groups.google.com/g/track14-testers", email: "abekdiyor@gmail.com" },
     flags: { maintenance: false, newApps: true, purchases: true },
     economy: { ...DEFAULT_ECONOMY },
   };

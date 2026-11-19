@@ -9,9 +9,12 @@ The phone is untrusted. Anything that moves value or proves a test day is decide
 | Coin forgery | `wallets`, `transactions`, `tests`, `campaigns`, `purchases`, `catalog` are `allow write: if false`; only Cloud Functions (Admin SDK) write them. |
 | Fake test days | Day status and seconds are computed by a Function; the client value is never trusted (30 s rule re-checked server side). |
 | Cloned or modified app | Firebase App Check: Play Integrity in release, debug provider in debug. Enforce it in the console for Firestore and Functions. |
-| Duplicate accounts | `devices/{deviceId}` written by a Function with Play Integrity verdicts. |
+| Fake devices | Every callable enforces App Check; in release the token comes from Play Integrity, so emulators, rooted or modified builds fail before any Function runs. |
+| Duplicate accounts | Not enforced yet: `devices/{deviceId}` is reserved (client access denied) for a later one-account-per-device check. The welcome bonus is paid once per Google account. |
 | Data exposure | Public reads only for `catalog` and `config`. Owner data is never in `catalog`. |
-| Staff access | Custom claim `role` = superadmin / moderator / support. Admin actions are callable Functions that write `auditLogs`. |
+| Staff access | Custom claim `role` = superadmin / moderator / support. Admin actions are callable Functions that write `auditLogs`. Staff have no direct write access in rules either: `config` and `reports` change only through validated, audited callables. |
+| Client input | Profiles, apps, feedback and reports are validated in rules (allowed keys, types, sizes, link and package formats, feedback tags). |
+| Account deletion | `deleteAccount` (in Settings and on `/delete-account`) removes personal data and the Auth user; ledger and purchase records stay without a profile behind them. Audit entries expire after a year (TTL). |
 | Blocked users | `users/{uid}.blocked` is written only by a Function. Writes by blocked users are rejected in rules. |
 | Transport | HTTPS only: `usesCleartextTraffic=false` and a network security config without user CAs. |
 | Local data | `allowBackup=false`, cloud backup and device transfer excluded. No secrets in the app. |
@@ -28,7 +31,7 @@ The phone is untrusted. Anything that moves value or proves a test day is decide
 ## Before launch
 
 - Enforce App Check; test with the debug token disabled in release.
-- Run the rules against the emulator with allow and deny cases for every collection.
+- Run `firebase/rules-test` against the emulator (SETUP step 26) and keep it green.
 - Store the upload keystore outside the repo and enable Play App Signing.
 
 ## Daily check and device data

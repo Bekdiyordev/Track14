@@ -21,9 +21,6 @@ service cloud.firestore {
     function isStaff() {
       return role() in ['superadmin', 'moderator', 'support'];
     }
-    function isSuperadmin() {
-      return role() == 'superadmin';
-    }
     function isBlocked() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('blocked', false) == true;
     }
@@ -32,6 +29,20 @@ service cloud.firestore {
     }
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    // Optional string field: absent, null, or a string of at most max characters.
+    function optString(d, key, max) {
+      return d.get(key, null) == null || (d.get(key, null) is string && d.get(key, null).size() <= max);
+    }
+    function validProfile(d) {
+      return optString(d, 'displayName', 100)
+        && optString(d, 'photoUrl', 500)
+        && optString(d, 'email', 254)
+        && optString(d, 'lang', 10)
+        && optString(d, 'country', 8)
+        && optString(d, 'timezone', 64)
+        && optString(d, 'deviceModel', 100)
+        && (d.get('usageAccess', false) is bool);
     }
 
     // ---------- users ----------
@@ -42,10 +53,12 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(
           ['displayName', 'photoUrl', 'email', 'lang', 'country', 'timezone',
            'deviceModel', 'usageAccess', 'createdAt'])
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        && validProfile(request.resource.data);
       allow update: if isUser(uid) && !isBlocked()
         && onlyChanges(['displayName', 'photoUrl', 'lang', 'country', 'timezone',
-                        'deviceModel', 'usageAccess']);
+                        'deviceModel', 'usageAccess'])
+        && validProfile(request.resource.data);
       allow delete: if false;
 
       // FCM registration tokens; the document id is the token itself.
@@ -154,7 +167,9 @@ service cloud.firestore {
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
         && request.resource.data.tags is list && request.resource.data.tags.size() <= 5
+        && request.resource.data.tags.hasOnly(['bug', 'idea', 'design', 'speed', 'positive'])
         && request.resource.data.text is string && request.resource.data.text.size() <= 1000
+        && optString(request.resource.data, 'imageUrl', 500)
         && exists(/databases/$(database)/documents/tests/$(request.resource.data.testId))
         && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.testerUid == request.auth.uid
         // appId and ownerUid must be the test's own, so feedback cannot be sent to someone else.
@@ -177,8 +192,8 @@ service cloud.firestore {
         && request.resource.data.targetId is string && request.resource.data.targetId.size() <= 160
         && (!('comment' in request.resource.data)
             || (request.resource.data.comment is string && request.resource.data.comment.size() <= 1000));
-      allow update: if isStaff();
-      allow delete: if false;
+      // Resolving goes through adminResolveReport (validated and audited), never a direct write.
+      allow update, delete: if false;
     }
 
     // ---------- published apps and public counters (Functions write) ----------
@@ -191,10 +206,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ---------- config (public read, superadmin write) ----------
+    // ---------- config (public read; written only by adminSetConfig and the seed script) ----------
     match /config/{doc} {
       allow read: if true;
-      allow write: if isSuperadmin();
+      allow write: if false;
     }
 
     // ---------- push jobs (admin app reads, Functions write) ----------

@@ -75,11 +75,17 @@ The admin app lives in this project as a separate Android module with its own pa
 
     Writes `config/app_version`, `support`, `flags`, `economy` only where missing
     (`--force` overwrites). Later changes go through the admin app.
-23. Web pages: replace every `CONTACT_EMAIL` in `firebase/hosting/privacy/index.html` and
-    `firebase/hosting/delete-account/index.html` with your support address, then
+23. Web pages (contact e-mail abekdiyor@gmail.com, also seeded as the support e-mail):
     `firebase deploy --only hosting`. Pages: `https://track14-c2822.web.app/privacy` (already
     linked in the app) and `/delete-account`.
 24. `firebase deploy --only firestore:indexes` also turns on the TTL policy that removes audit
     entries after a year (`auditLogs.expireAt`), as the privacy policy says.
 25. Play Console listing, Data safety and Usage Access declaration: copy from
     `docs/STORE_LISTING.md`.
+26. Security rules tests (needs Java 11+ and `npm i -g firebase-tools`), from `firebase/`:
+
+        npm --prefix rules-test install
+        firebase emulators:exec --only firestore "npm --prefix rules-test test"
+
+    They prove that no client, superadmin included, can write coins, tests, config or audit logs
+    directly, and that profiles, apps, feedback and reports are validated.
