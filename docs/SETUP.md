@@ -5,25 +5,24 @@ SHA-256 fingerprints are added, and Google sign-in is enabled. Downloaded SDK
 configurations and the real Web client ID are included in both modules.
 
 - Firestore `(default)` exists in `europe-central2`; production security rules and
-  all 12 composite indexes have been deployed. The four starting `config` documents
+  all 13 composite indexes have been deployed. The four starting `config` documents
   have been created without overwriting existing data.
-- App Check terms have been accepted. Samsung QA debug tokens for both apps have
-  been registered; their secret values stay outside Git. Play Integrity provider
-  registration and API enforcement still need completion and device verification.
+- Both Android apps are registered with the Play Integrity provider. The Samsung
+  debug credentials for both apps exchanged successfully for App Check tokens.
+  Firestore App Check enforcement is enabled. Verify Play Integrity on a build
+  signed and distributed as planned before release.
 - Billing is intentionally deferred at the owner's request. Cloud Functions and
   the `auditLogs.expireAt` TTL policy are **not deployed**. Full backend flows,
   purchases, account deletion and scheduled work cannot be validated yet.
-- The first superadmin is approved for `abekdiyor@gmail.com`. That Google account
-  must first complete Firebase sign-in before the role can be assigned. Samsung
-  QA currently encounters connection timeouts to Google Auth/App Check on Wi-Fi
-  (IPv4 TCP succeeds; IPv6 TCP times out); no successful Firebase login is claimed.
-- Both debug APKs build, unit tests and lint pass. The admin login now displays
-  errors and permits retry; Firebase sign-in stops waiting after 30 seconds in both
-  apps. User profile setup does not keep the main login busy while offline.
+- Firebase confirmed the verified Google account `abekdiyor@gmail.com` and its
+  `superadmin` claim. Google sign-in succeeded on Samsung in both apps over Wi-Fi.
+- Firebase Auth took about 38 seconds in Samsung QA. Both apps allow up to 60
+  seconds for Firebase sign-in. The admin app observes Firebase session changes
+  and offers a retry if a role refresh fails. A temporary USB relay was used for
+  Firestore UI checks after intermittent Wi-Fi timeouts on the Samsung.
 
-Resume with working device connectivity, finish App Check, assign the approved
-role and test both apps. Once billing is connected, deploy Firestore including TTL
-and Functions, then verify the server-dependent flows before release. Existing
+Once billing is connected, deploy Firestore including TTL and Functions, then
+verify the server-dependent flows before release. Existing
 Auth users created before `onUserCreated` is deployed will need an idempotent
 welcome-wallet backfill; the Auth creation trigger does not replay old users.
 
@@ -53,7 +52,8 @@ configuration is already complete for both `:app` and `:admin`:
        cd firebase/functions && npm install && npm test && cd ..
        firebase deploy --only firestore,functions --project track14-c2822
 
-10. App Check > enforce for Firestore once valid app tokens are verified. Callable
+10. App Check > enforce for Firestore once valid app tokens are verified. This
+    step has been completed for `track14-c2822`. Callable
     Functions already require App Check outside the local emulator in code.
 
 # Setup: Coin14 purchases (Play Billing)

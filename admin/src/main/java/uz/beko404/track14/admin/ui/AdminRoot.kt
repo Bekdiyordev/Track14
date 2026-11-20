@@ -79,7 +79,12 @@ fun AdminRoot(session: SessionViewModel = hiltViewModel()) {
     AdminTheme {
         when (val s = session.session.collectAsStateWithLifecycle().value) {
             AdminSession.Checking -> Centered { CircularProgressIndicator() }
-            AdminSession.SignedOut -> LoginScreen(onSignedIn = session::refresh)
+            AdminSession.SignedOut -> LoginScreen()
+            AdminSession.CheckFailed -> Centered {
+                Text("Admin rolini tekshirib bo'lmadi. Qayta urinib ko'ring.", textAlign = TextAlign.Center)
+                OutlinedButton(onClick = session::refresh) { Text("Qayta tekshirish") }
+                OutlinedButton(onClick = session::signOut) { Text("Boshqa akkaunt") }
+            }
             AdminSession.NotStaff -> Centered {
                 Text("Bu akkauntda admin roli yo'q.", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                 Text(
@@ -96,7 +101,7 @@ fun AdminRoot(session: SessionViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun LoginScreen(onSignedIn: () -> Unit) {
+private fun LoginScreen() {
     val context = LocalContext.current
     val webClientId = stringResource(R.string.google_web_client_id)
     val scope = rememberCoroutineScope()
@@ -112,8 +117,7 @@ private fun LoginScreen(onSignedIn: () -> Unit) {
                     error = null
                     try {
                         when (val result = signInWithGoogle(context, webClientId, FirebaseAuth.getInstance())) {
-                            GoogleSignInResult.SignedIn -> onSignedIn()
-                            GoogleSignInResult.Cancelled -> Unit
+                            GoogleSignInResult.SignedIn, GoogleSignInResult.Cancelled -> Unit
                             is GoogleSignInResult.Failed -> error = result.message
                         }
                     } finally {

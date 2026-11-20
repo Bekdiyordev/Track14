@@ -4,11 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import uz.beko404.track14.admin.data.AdminApp
 import uz.beko404.track14.admin.data.AdminRepository
 import uz.beko404.track14.admin.data.AdminUser
@@ -76,6 +80,7 @@ sealed interface AdminSession {
     data object Checking : AdminSession
     data object SignedOut : AdminSession
     data object NotStaff : AdminSession
+    data object CheckFailed : AdminSession
     data class Staff(val role: Role) : AdminSession
 }
 
@@ -83,20 +88,39 @@ sealed interface AdminSession {
 class SessionViewModel @Inject constructor(private val repo: AdminRepository) : ViewModel() {
     private val _session = MutableStateFlow<AdminSession>(AdminSession.Checking)
     val session: StateFlow<AdminSession> = _session.asStateFlow()
+    private var roleCheck: Job? = null
 
-    init { refresh() }
-
-    fun refresh() {
+    init {
         viewModelScope.launch {
+            repo.signedInUser.collect { checkRole(forceRefresh = false) }
+        }
+    }
+
+    fun refresh() = checkRole(forceRefresh = true)
+
+    private fun checkRole(forceRefresh: Boolean) {
+        roleCheck?.cancel()
+        roleCheck = viewModelScope.launch {
+            if (!repo.isSignedIn()) {
+                _session.value = AdminSession.SignedOut
+                return@launch
+            }
             _session.value = AdminSession.Checking
-            _session.value = when (val role = repo.currentRole()) {
-                null -> if (repo.isSignedIn()) AdminSession.NotStaff else AdminSession.SignedOut
-                else -> AdminSession.Staff(role)
+            _session.value = try {
+                val role = withTimeout(60_000) { repo.currentRole(forceRefresh) }
+                if (role == null) AdminSession.NotStaff else AdminSession.Staff(role)
+            } catch (_: TimeoutCancellationException) {
+                AdminSession.CheckFailed
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                AdminSession.CheckFailed
             }
         }
     }
 
     fun signOut() {
+        roleCheck?.cancel()
         repo.signOut()
         _session.value = AdminSession.SignedOut
     }

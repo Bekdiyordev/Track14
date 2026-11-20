@@ -43,7 +43,7 @@ suspend fun signInWithGoogle(context: Context, webClientId: String, auth: Fireba
             return GoogleSignInResult.Failed("Google akkaunt ma'lumoti olinmadi. Qayta urinib ko'ring.")
         }
         val token = GoogleIdTokenCredential.createFrom(credential.data).idToken
-        val user = withTimeout(30_000) {
+        val user = withTimeout(60_000) {
             auth.signInWithCredential(GoogleAuthProvider.getCredential(token, null)).await().user
         }
         if (user != null) GoogleSignInResult.SignedIn

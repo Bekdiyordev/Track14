@@ -8,7 +8,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
 import uz.beko404.track14.admin.logic.AdminRules
 import uz.beko404.track14.admin.logic.DashboardMath
@@ -32,10 +36,16 @@ class AdminRepository @Inject constructor(
 ) {
     // ------------------------------------------------------------ session
 
-    /** Role from a fresh ID token, so a just-granted role is picked up. */
-    suspend fun currentRole(): Role? {
+    val signedInUser: Flow<String?> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.uid) }
+        auth.addAuthStateListener(listener)
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }.distinctUntilChanged()
+
+    /** Refresh on demand so a just-granted role is picked up. */
+    suspend fun currentRole(forceRefresh: Boolean): Role? {
         val user = auth.currentUser ?: return null
-        return runCatching { Role.fromClaim(user.getIdToken(true).await().claims["role"]) }.getOrNull()
+        return Role.fromClaim(user.getIdToken(forceRefresh).await().claims["role"])
     }
 
     fun isSignedIn(): Boolean = auth.currentUser != null

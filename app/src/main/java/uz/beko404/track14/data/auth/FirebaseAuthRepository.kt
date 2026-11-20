@@ -34,7 +34,7 @@ class FirebaseAuthRepository @Inject constructor(
     override suspend fun signInWithGoogle(idToken: String): DomainResult<Session.SignedIn> =
         try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val user = withTimeout(30_000) { auth.signInWithCredential(credential).await().user }
+            val user = withTimeout(60_000) { auth.signInWithCredential(credential).await().user }
             val session = user.toSession()
             if (session is Session.SignedIn) {
                 DomainResult.Success(session)
