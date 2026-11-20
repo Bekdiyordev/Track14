@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -61,7 +62,6 @@ import uz.beko404.track14.core.designsystem.ProBadge
 import uz.beko404.track14.domain.repository.CatalogApp
 import uz.beko404.track14.domain.repository.Session
 import uz.beko404.track14.feature.auth.AuthViewModel
-import uz.beko404.track14.feature.auth.rememberGoogleIdTokenClient
 
 @Composable
 fun AppDetailRoute(
@@ -73,16 +73,23 @@ fun AppDetailRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val auth by authViewModel.state.collectAsStateWithLifecycle()
-    val tokenClient = rememberGoogleIdTokenClient()
+    var askSignIn by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    val start = { (state as? AppDetailUiState.Content)?.let { onStartTest(it.app.id) }; Unit }
 
     AppDetailScreen(
         state = state,
         signedIn = auth.session is Session.SignedIn,
         isSigningIn = auth.isSigningIn,
         onBack = onBack,
-        onSignIn = { authViewModel.signIn { tokenClient.getIdToken() } },
-        onStart = { (state as? AppDetailUiState.Content)?.let { onStartTest(it.app.id) } },
+        onSignIn = { askSignIn = true },
+        onStart = start,
         onReport = { (state as? AppDetailUiState.Content)?.let { onReport(it.app.id) } },
+    )
+    uz.beko404.track14.feature.auth.SignInSheet(
+        visible = askSignIn,
+        onDismiss = { askSignIn = false },
+        onSignedIn = start,
+        authViewModel = authViewModel,
     )
 }
 

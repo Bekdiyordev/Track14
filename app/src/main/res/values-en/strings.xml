@@ -511,4 +511,10 @@
     <string name="top_sub_best">%1$s a day · best value</string>
     <string name="top_sub_popular">~%1$s a day · most picked</string>
     <string name="top_sub_try">To try it out</string>
+    <string name="testdetail_since">since %1$s</string>
+    <string name="testdetail_today_legend">Today</string>
+    <string name="signin_title">Sign in to continue</string>
+    <string name="signin_body">You need a Google account to start a test. The opt-in is done with this same account.</string>
+    <string name="signin_same_account">Pick the same account as your phone\'s Play Store, otherwise the test won\'t count.</string>
+    <string name="signin_consent">By signing in you agree to the privacy policy.</string>
 </resources>

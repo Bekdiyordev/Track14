@@ -511,4 +511,10 @@
     <string name="top_sub_best">%1$s в день · выгоднее всего</string>
     <string name="top_sub_popular">~%1$s в день · выбирают чаще</string>
     <string name="top_sub_try">Чтобы попробовать</string>
+    <string name="testdetail_since">с %1$s</string>
+    <string name="testdetail_today_legend">Сегодня</string>
+    <string name="signin_title">Войдите, чтобы продолжить</string>
+    <string name="signin_body">Чтобы начать тест, нужен аккаунт Google. Opt-in делается именно с ним.</string>
+    <string name="signin_same_account">Выберите тот же аккаунт, что и в Play Store на телефоне, иначе тест не засчитается.</string>
+    <string name="signin_consent">Входя, вы соглашаетесь с политикой конфиденциальности.</string>
 </resources>

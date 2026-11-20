@@ -2,26 +2,14 @@ package uz.beko404.track14.feature.testdetail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -34,31 +22,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import uz.beko404.track14.core.designsystem.SkeletonList
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.AppTile
-import uz.beko404.track14.core.designsystem.CoinAmount
+import uz.beko404.track14.core.designsystem.BackButton
+import uz.beko404.track14.core.designsystem.Coin14Icon
+import uz.beko404.track14.core.designsystem.Manrope
+import uz.beko404.track14.core.designsystem.SkeletonList
+import uz.beko404.track14.core.designsystem.T14Card
+import uz.beko404.track14.core.designsystem.T14Icon
+import uz.beko404.track14.core.designsystem.T14Paths
+import uz.beko404.track14.core.designsystem.T14Theme
 import uz.beko404.track14.core.designsystem.Track14Colors
-import uz.beko404.track14.core.designsystem.accentFor
 import uz.beko404.track14.domain.model.DayHistory
 import uz.beko404.track14.domain.model.DayRecord
 import uz.beko404.track14.domain.model.DayStatus
+import uz.beko404.track14.domain.model.Feedback
 import uz.beko404.track14.domain.model.TestStatus
 import uz.beko404.track14.domain.rules.CheckMode
 import uz.beko404.track14.feature.messageRes
-import uz.beko404.track14.feature.social.FeedbackItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 // ---------------------------------------------------------------- screen 9: test detail (tester)
 
@@ -73,6 +70,7 @@ fun TestDetailRoute(
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     var confirmLeave by remember { mutableStateOf(false) }
+    val c = T14Theme.colors
 
     LaunchedEffect(viewModel, resources) {
         viewModel.messages.collect { e ->
@@ -95,89 +93,102 @@ fun TestDetailRoute(
                 val (test, records, now) = s.value
                 val today = test.dayNumber(now)?.takeIf { it in 1..14 }
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 28.dp)) {
-                    Row(Modifier.padding(start = 4.dp, end = 16.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.detail_back)) }
+                    Row(
+                        Modifier.fillMaxWidth().padding(start = 12.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        BackButton(onBack)
                         AppTile(test.appId.ifEmpty { test.id }, test.appName, size = 40.dp)
-                        Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                            Text(test.appName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
-                            Text(
-                                if (today != null) stringResource(R.string.testdetail_day_of, today) else stringResource(R.string.mytests_status_starting),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                            Text(test.appName, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 1)
+                            val start = test.startedAtMillis?.let { DayHistory.dateOf(it, 1, test.timezone) }
+                            val line = buildString {
+                                append(if (today != null) stringResource(R.string.testdetail_day_of, today) else stringResource(R.string.mytests_status_starting))
+                                if (start != null) append(" · ").append(stringResource(R.string.testdetail_since, start.format(DateTimeFormatter.ofPattern("d-MMMM"))))
+                            }
+                            Text(line, fontSize = 13.sp, color = c.textSecondary, maxLines = 1)
                         }
                         StatusChip(test.status)
                     }
 
-                    SectionCard {
+                    SectionCard(Modifier.padding(top = 12.dp)) {
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text(stringResource(R.string.testdetail_grid), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.testdetail_grid), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, modifier = Modifier.weight(1f))
                             if (test.status == TestStatus.ACTIVE) {
-                                Text(stringResource(R.string.testdetail_days_left, DayHistory.daysLeft(today)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.testdetail_days_left, DayHistory.daysLeft(today)), fontSize = 13.sp, color = c.textSecondary)
                             }
                         }
                         DayGrid(test.days, today.takeIf { test.status == TestStatus.ACTIVE }, cellHeight = 52)
                         Legend()
                     }
 
-                    Row(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         MiniCard(stringResource(R.string.testdetail_earned), Modifier.weight(1f)) {
-                            CoinAmount(DayHistory.earned(test).value.toString())
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Coin14Icon(20.dp)
+                                Text(DayHistory.earned(test).value.toString(), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = c.coinText)
+                            }
                         }
                         MiniCard(stringResource(R.string.testdetail_bonus), Modifier.weight(1f)) {
-                            Text("+${test.completionBonus.value}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                            Text("+${test.completionBonus.value}", fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
                         }
                     }
 
                     DayHistory.warning(test.days, test.status)?.let { w ->
-                        Column(
-                            Modifier.padding(horizontal = 20.dp).fillMaxWidth()
-                                .background(Color(0xFFFEF2F2), RoundedCornerShape(16.dp))
-                                .border(1.dp, Color(0xFFFECACA), RoundedCornerShape(16.dp))
-                                .padding(14.dp),
+                        val text = if (c.dark) c.dangerText else Color(0xFF7F1D1D)
+                        Row(
+                            Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp)).background(c.dangerSoft)
+                                .border(1.dp, c.dangerBorder, RoundedCornerShape(16.dp)).padding(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text(stringResource(R.string.testdetail_missed, w.missed, w.limit), fontWeight = FontWeight.Bold, color = Color(0xFF7F1D1D))
-                            Text(stringResource(R.string.testdetail_missed_rule), style = MaterialTheme.typography.bodySmall, color = Color(0xFF7F1D1D))
+                            T14Icon(T14Paths.Warning, size = 22.dp, tint = c.dangerText)
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(stringResource(R.string.testdetail_missed, w.missed, w.limit), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = text)
+                                Text(stringResource(R.string.testdetail_missed_rule), fontSize = 13.sp, lineHeight = 19.sp, color = text)
+                            }
                         }
                     }
 
-                    SectionCard {
-                        Text(stringResource(R.string.testdetail_history), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+                    ListCard(stringResource(R.string.testdetail_history), Modifier.padding(top = 12.dp)) {
                         val history = DayHistory.closed(records)
                         if (history.isEmpty()) {
-                            Text(stringResource(R.string.testdetail_history_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.testdetail_history_empty), fontSize = 13.sp, color = c.textSecondary, modifier = Modifier.padding(bottom = 12.dp))
                         }
                         history.forEach { r ->
                             HistoryRow(r, DayHistory.dateOf(test.startedAtMillis, r.day, test.timezone), isToday = r.day == today, showMode = true)
                         }
                     }
 
-                    if (test.status == TestStatus.ACTIVE || test.status == TestStatus.COMPLETED) {
-                        OutlinedButton(
-                            onClick = { onFeedback(test.id) },
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth().height(52.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ) { Text(stringResource(if (test.feedbackRewarded) R.string.mytests_feedback else R.string.mytests_feedback_reward)) }
-                    }
-                    if (test.status == TestStatus.ACTIVE) {
-                        TextButton(
-                            onClick = { confirmLeave = true },
-                            enabled = !busy,
-                            modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
-                        ) { Text(stringResource(R.string.mytests_leave), color = MaterialTheme.colorScheme.error) }
+                    Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (test.status == TestStatus.ACTIVE || test.status == TestStatus.COMPLETED) {
+                            OutlineAction(
+                                stringResource(if (test.feedbackRewarded) R.string.mytests_feedback else R.string.mytests_feedback_reward),
+                                color = c.blueSoftText, border = c.blueBorder,
+                            ) { onFeedback(test.id) }
+                        }
+                        if (test.status == TestStatus.ACTIVE) {
+                            Box(
+                                Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(16.dp)).clickable(enabled = !busy) { confirmLeave = true },
+                                contentAlignment = Alignment.Center,
+                            ) { Text(stringResource(R.string.mytests_leave), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = c.dangerText) }
+                        }
                     }
                 }
                 if (confirmLeave) {
                     AlertDialog(
                         onDismissRequest = { confirmLeave = false },
-                        title = { Text(stringResource(R.string.mytests_leave_title)) },
-                        text = { Text(stringResource(R.string.mytests_leave_body, test.appName)) },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(24.dp),
+                        title = { Text(stringResource(R.string.mytests_leave_title), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) },
+                        text = { Text(stringResource(R.string.mytests_leave_body, test.appName), fontSize = 15.sp, lineHeight = 22.sp, color = c.textBody) },
                         confirmButton = {
                             TextButton(onClick = { confirmLeave = false; viewModel.leave() }) {
-                                Text(stringResource(R.string.mytests_leave_confirm), color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(R.string.mytests_leave_confirm), color = c.dangerText, fontWeight = FontWeight.Bold)
                             }
                         },
-                        dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.cancel)) } },
+                        dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.cancel), color = c.textSecondary) } },
                     )
                 }
             }
@@ -188,6 +199,10 @@ fun TestDetailRoute(
 
 // ---------------------------------------------------------------- screen 14: tester detail (owner)
 
+private val AvatarColors = listOf(
+    Color(0xFF0EA5E9), Color(0xFFEC4899), Color(0xFF7C3AED), Color(0xFF16A34A), Color(0xFFEA580C), Color(0xFF475569),
+)
+
 @Composable
 fun TesterDetailRoute(
     onBack: () -> Unit,
@@ -195,6 +210,7 @@ fun TesterDetailRoute(
     viewModel: TesterDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val c = T14Theme.colors
     when (val s = state) {
         DetailState.Loading -> SkeletonList(count = 3, withDays = true, modifier = Modifier.padding(20.dp))
         DetailState.NotFound -> NotFoundState(onBack)
@@ -207,62 +223,74 @@ fun TesterDetailRoute(
             val name = tester.name.ifBlank { stringResource(R.string.testerdetail_anonymous) }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 28.dp)) {
                 Header(stringResource(R.string.testerdetail_title), onBack)
-                Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     Box(
-                        Modifier.size(76.dp).background(accentFor(tester.testId), CircleShape),
+                        Modifier.size(76.dp).clip(CircleShape).background(AvatarColors[Math.floorMod(tester.testId.hashCode(), AvatarColors.size)]),
                         contentAlignment = Alignment.Center,
-                    ) { Text(tester.initials, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold) }
-                    Text(name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                    if (tester.device.isNotBlank()) {
-                        Text(tester.device, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ) { Text(tester.initials, color = Color.White, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp) }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(name, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                        if (tester.device.isNotBlank()) Text(tester.device, fontSize = 14.sp, color = c.textBody)
                     }
                 }
                 val passed = tester.days.count { it == DayStatus.PASSED }
                 val closed = tester.days.count { it != DayStatus.PENDING }
-                Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatBox(tester.reliability?.let { "$it%" } ?: "—", stringResource(R.string.testerdetail_reliability), Modifier.weight(1f), Track14Colors.Success.takeIf { (tester.reliability ?: 0) >= 80 })
+                Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    StatBox(tester.reliability?.let { "$it%" } ?: "—", stringResource(R.string.testerdetail_reliability), Modifier.weight(1f), c.successText.takeIf { (tester.reliability ?: 0) >= 80 })
                     StatBox(tester.completedTests.toString(), stringResource(R.string.testerdetail_completed), Modifier.weight(1f))
                     StatBox("$passed / $closed", stringResource(R.string.testerdetail_days), Modifier.weight(1f))
                 }
                 if (DayHistory.usedFallback(records)) {
                     Row(
-                        Modifier.padding(horizontal = 20.dp).fillMaxWidth()
-                            .background(Color(0xFFFFFBEB), RoundedCornerShape(16.dp))
-                            .border(1.dp, Color(0xFFFDE68A), RoundedCornerShape(16.dp))
-                            .padding(14.dp),
+                        Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp)).background(c.amberSoft)
+                            .border(1.dp, c.amberBorder, RoundedCornerShape(16.dp)).padding(14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text("B", fontWeight = FontWeight.ExtraBold, color = Color(0xFF92400E), modifier = Modifier.background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 2.dp))
-                        Text(stringResource(R.string.testerdetail_fallback), style = MaterialTheme.typography.bodySmall, color = Color(0xFF78350F))
+                        Box(Modifier.size(26.dp).clip(RoundedCornerShape(8.dp)).background(if (c.dark) Color(0xFF3B2A0A) else Color(0xFFFEF3C7)), contentAlignment = Alignment.Center) {
+                            Text("B", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = c.amberText)
+                        }
+                        Text(stringResource(R.string.testerdetail_fallback), fontSize = 13.sp, lineHeight = 20.sp, color = if (c.dark) c.amberText else Color(0xFF78350F))
                     }
                 }
-                SectionCard {
-                    Text(stringResource(R.string.testerdetail_days_in, appName.ifBlank { "—" }), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+                SectionCard(Modifier.padding(top = 12.dp), radius = 20.dp, padding = 16.dp, spacing = 12.dp) {
+                    Text(stringResource(R.string.testerdetail_days_in, appName.ifBlank { "—" }), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                     DayGrid(tester.days, today = null, cellHeight = 40)
                 }
-                SectionCard {
-                    Text(stringResource(R.string.testerdetail_recent), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+                ListCard(stringResource(R.string.testerdetail_recent), Modifier.padding(top = 12.dp), radius = 20.dp, titleSize = 16) {
                     val history = DayHistory.closed(records).take(7)
                     if (history.isEmpty()) {
-                        Text(stringResource(R.string.testdetail_history_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.testdetail_history_empty), fontSize = 13.sp, color = c.textSecondary, modifier = Modifier.padding(bottom = 12.dp))
                     }
-                    history.forEach { r -> HistoryRow(r, DayHistory.dateOf(tester.startedAtMillis, r.day, tester.timezone), isToday = false, showMode = true) }
+                    history.forEach { r -> HistoryRow(r, DayHistory.dateOf(tester.startedAtMillis, r.day, tester.timezone), isToday = false, showMode = false) }
                 }
-                if (feedback.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.testerdetail_feedback),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp),
-                    )
-                    feedback.forEach { FeedbackItem(it, Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
+                feedback.forEach { f -> FeedbackCard(f) }
+                Box(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
+                    OutlineAction(stringResource(R.string.report_title), color = c.dangerText, border = c.dangerBorder, icon = T14Paths.Flag) { onReport(tester.testId) }
                 }
-                OutlinedButton(
-                    onClick = { onReport(tester.testId) },
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp).fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
-                ) { Text(stringResource(R.string.report_title), color = MaterialTheme.colorScheme.error) }
             }
+        }
+    }
+}
+
+@Composable
+private fun FeedbackCard(f: Feedback) {
+    val c = T14Theme.colors
+    SectionCard(Modifier.padding(top = 12.dp), radius = 20.dp, padding = 16.dp, spacing = 8.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.dash_feedback), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+            Text("★".repeat(f.rating) + "☆".repeat(5 - f.rating), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.coinText)
+        }
+        if (f.text.isNotBlank()) Text("“${f.text}”", fontSize = 14.sp, lineHeight = 21.sp, color = c.textBody)
+        if (f.createdAtMillis > 0) {
+            Text(
+                java.time.Instant.ofEpochMilli(f.createdAtMillis).atZone(java.time.ZoneId.systemDefault()).toLocalDate().format(DateTimeFormatter.ofPattern("d-MMMM")),
+                fontSize = 12.sp, color = c.textSecondary,
+            )
         }
     }
 }
@@ -272,33 +300,42 @@ fun TesterDetailRoute(
 /** 14 cells in two rows of 7, with the day number and a ✓ / ✕ mark. */
 @Composable
 fun DayGrid(days: List<DayStatus>, today: Int?, cellHeight: Int) {
+    val c = T14Theme.colors
     val desc = stringResource(R.string.mytests_days_description, days.count { it == DayStatus.PASSED })
-    Column(Modifier.fillMaxWidth().semantics { contentDescription = desc }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val big = cellHeight >= 48
+    val gap = if (big) 8.dp else 6.dp
+    val future = if (c.dark) Color(0xFF1E293B) else Color(0xFFF1F5F9)
+    Column(Modifier.fillMaxWidth().semantics { contentDescription = desc }, verticalArrangement = Arrangement.spacedBy(gap)) {
         days.chunked(7).forEachIndexed { row, week ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                 week.forEachIndexed { col, status ->
                     val n = row * 7 + col + 1
                     val (bg, fg) = when (status) {
-                        DayStatus.PASSED -> Track14Colors.Success to Color.White
-                        DayStatus.MISSED -> Track14Colors.Danger to Color.White
-                        DayStatus.PENDING -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+                        DayStatus.PASSED -> Color(0xFF22C55E) to Color.White
+                        DayStatus.MISSED -> Color(0xFFDC2626) to Color.White
+                        DayStatus.PENDING -> future to c.textSecondary
                     }
-                    val shape = RoundedCornerShape(12.dp)
+                    val shape = RoundedCornerShape(if (big) 12.dp else 10.dp)
+                    val ring = when {
+                        n != today -> null
+                        status == DayStatus.PASSED -> Color(0xFF14532D)
+                        else -> Track14Colors.Blue600
+                    }
                     Column(
-                        Modifier.weight(1f).height(cellHeight.dp).background(bg, shape)
-                            .then(if (n == today) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape) else Modifier),
+                        Modifier.weight(1f).height(cellHeight.dp).clip(shape).background(bg)
+                            .then(if (ring != null) Modifier.border(2.dp, ring, shape) else Modifier),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
                     ) {
-                        Text("$n", color = fg, fontWeight = FontWeight.Bold)
-                        if (cellHeight >= 48) {
+                        Text("$n", color = fg, fontSize = if (big) 15.sp else 13.sp, fontWeight = FontWeight.Bold)
+                        if (big) {
                             val mark = when {
                                 n == today -> stringResource(R.string.testdetail_today)
                                 status == DayStatus.PASSED -> "✓"
                                 status == DayStatus.MISSED -> "✕"
                                 else -> ""
                             }
-                            if (mark.isNotEmpty()) Text(mark, color = fg, style = MaterialTheme.typography.labelSmall)
+                            if (mark.isNotEmpty()) Text(mark, color = if (n == today && status == DayStatus.PENDING) c.blueSoftText else fg, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -309,45 +346,62 @@ fun DayGrid(days: List<DayStatus>, today: Int?, cellHeight: Int) {
 
 @Composable
 private fun Legend() {
-    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        LegendItem(Track14Colors.Success, stringResource(R.string.testdetail_legend_done))
-        LegendItem(Track14Colors.Danger, stringResource(R.string.testdetail_legend_missed))
-        LegendItem(MaterialTheme.colorScheme.surfaceVariant, stringResource(R.string.testdetail_legend_future))
+    val c = T14Theme.colors
+    FlowRowCompat {
+        LegendItem(Modifier.background(Color(0xFF22C55E)), stringResource(R.string.testdetail_legend_done))
+        LegendItem(Modifier.background(Color(0xFFDC2626)), stringResource(R.string.testdetail_legend_missed))
+        LegendItem(Modifier.border(2.dp, Track14Colors.Blue600, RoundedCornerShape(4.dp)), stringResource(R.string.testdetail_today_legend))
+        LegendItem(Modifier.background(if (c.dark) Color(0xFF263247) else Color(0xFFE2E8F0)), stringResource(R.string.testdetail_legend_future))
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LegendItem(color: Color, label: String) {
+private fun FlowRowCompat(content: @Composable () -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { content() }
+}
+
+@Composable
+private fun LegendItem(swatch: Modifier, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Box(Modifier.size(12.dp).background(color, RoundedCornerShape(4.dp)))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.size(12.dp).clip(RoundedCornerShape(4.dp)).then(swatch))
+        Text(label, fontSize = 12.sp, color = T14Theme.colors.textBody)
     }
 }
 
 @Composable
 private fun HistoryRow(record: DayRecord, date: LocalDate?, isToday: Boolean, showMode: Boolean) {
+    val c = T14Theme.colors
     val passed = record.status == DayStatus.PASSED
-    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(10.dp).background(if (passed) Track14Colors.Success else Track14Colors.Danger, CircleShape))
-        Column(Modifier.weight(1f)) {
+    Row(
+        Modifier.fillMaxWidth()
+            .drawBehind { drawLine(c.divider, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx()) }
+            .padding(vertical = if (showMode) 12.dp else 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(10.dp).clip(CircleShape).background(if (passed) Color(0xFF22C55E) else Color(0xFFDC2626)))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(
                 if (isToday) stringResource(R.string.testdetail_day_today, record.day) else stringResource(R.string.testdetail_day, record.day),
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
             )
-            date?.let { Text(it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (showMode) date?.let { Text(it.format(DateTimeFormatter.ofPattern("d-MMMM")), fontSize = 12.sp, color = c.textSecondary) }
         }
+        val modeLetter = when (record.mode) { CheckMode.USAGE_ACCESS -> "A"; CheckMode.FALLBACK -> "B"; null -> "—" }
         Text(
-            if (passed) duration(record.seconds) else stringResource(R.string.testdetail_missed_day),
-            color = if (passed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.bodySmall,
+            when {
+                !passed -> stringResource(R.string.testdetail_missed_day)
+                showMode -> duration(record.seconds)
+                else -> duration(record.seconds) + " · " + modeLetter
+            },
+            fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            color = if (passed) MaterialTheme.colorScheme.onSurface else c.dangerText,
         )
         if (showMode) {
             Text(
-                when (record.mode) { CheckMode.USAGE_ACCESS -> "A"; CheckMode.FALLBACK -> "B"; null -> "—" },
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp)).padding(horizontal = 7.dp, vertical = 3.dp),
+                modeLetter, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = c.textBody,
+                modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(c.divider).padding(horizontal = 7.dp, vertical = 3.dp),
             )
         }
     }
@@ -361,46 +415,76 @@ private fun duration(seconds: Int?): String {
 
 @Composable
 private fun StatusChip(status: TestStatus) {
+    val c = T14Theme.colors
     val (label, bg, fg) = when (status) {
-        TestStatus.ACTIVE -> Triple(R.string.testdetail_active, Color(0xFFDCFCE7), Color(0xFF15803D))
-        TestStatus.COMPLETED -> Triple(R.string.mytests_status_completed, Color(0xFFDBEAFE), Color(0xFF1D4ED8))
-        TestStatus.FAILED -> Triple(R.string.mytests_status_failed, Color(0xFFFEE2E2), Color(0xFFB91C1C))
-        TestStatus.LEFT -> Triple(R.string.mytests_status_left, Color(0xFFF1F5F9), Color(0xFF475569))
-        TestStatus.JOINING -> Triple(R.string.mytests_status_starting, Color(0xFFF1F5F9), Color(0xFF475569))
+        TestStatus.ACTIVE -> Triple(R.string.testdetail_active, c.successSoft, c.successText)
+        TestStatus.COMPLETED -> Triple(R.string.mytests_status_completed, c.blueSoft, c.blueSoftText)
+        TestStatus.FAILED -> Triple(R.string.mytests_status_failed, c.dangerSoft, c.dangerText)
+        TestStatus.LEFT -> Triple(R.string.mytests_status_left, c.divider, c.textBody)
+        TestStatus.JOINING -> Triple(R.string.mytests_status_starting, c.divider, c.textBody)
     }
-    Text(stringResource(label), color = fg, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.background(bg, RoundedCornerShape(999.dp)).padding(horizontal = 10.dp, vertical = 5.dp))
+    Text(
+        stringResource(label), color = fg, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+        modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 10.dp, vertical = 5.dp),
+    )
 }
 
 @Composable
-private fun SectionCard(content: @Composable () -> Unit) {
-    Column(
-        Modifier.padding(horizontal = 20.dp, vertical = 6.dp).fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(22.dp)).padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) { content() }
+private fun SectionCard(
+    modifier: Modifier = Modifier,
+    radius: Dp = 22.dp,
+    padding: Dp = 18.dp,
+    spacing: Dp = 16.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    T14Card(modifier.padding(horizontal = 20.dp), radius = radius, padding = PaddingValues(padding), spacing = spacing, content = content)
+}
+
+/** Card with a title and hairline-separated rows (history lists). */
+@Composable
+private fun ListCard(title: String, modifier: Modifier = Modifier, radius: Dp = 22.dp, titleSize: Int = 17, content: @Composable ColumnScope.() -> Unit) {
+    T14Card(modifier.padding(horizontal = 20.dp), radius = radius, padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp), spacing = 0.dp) {
+        Text(title, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = titleSize.sp, modifier = Modifier.padding(top = 12.dp, bottom = 6.dp))
+        content()
+    }
 }
 
 @Composable
 private fun MiniCard(label: String, modifier: Modifier, value: @Composable () -> Unit) {
-    Column(modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    T14Card(modifier, radius = 18.dp, padding = PaddingValues(14.dp), spacing = 4.dp) {
+        Text(label, fontSize = 12.sp, color = T14Theme.colors.textSecondary)
         value()
     }
 }
 
 @Composable
 private fun StatBox(value: String, label: String, modifier: Modifier, color: Color? = null) {
-    Column(modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp)).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = color ?: MaterialTheme.colorScheme.onSurface)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    T14Card(modifier, radius = 16.dp, padding = PaddingValues(12.dp), spacing = 2.dp) {
+        Text(value, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = color ?: MaterialTheme.colorScheme.onSurface, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(label, fontSize = 11.sp, color = T14Theme.colors.textSecondary, modifier = Modifier.align(Alignment.CenterHorizontally))
+    }
+}
+
+/** 52dp outlined button on white: blue for feedback, red for report. */
+@Composable
+private fun OutlineAction(text: String, color: Color, border: Color, icon: String? = null, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        Modifier.fillMaxWidth().height(52.dp).clip(shape).background(MaterialTheme.colorScheme.surface)
+            .border(1.5.dp, border, shape).clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) T14Icon(icon, size = 18.dp, tint = color)
+        Text(text, fontSize = if (icon != null) 15.sp else 16.sp, fontWeight = FontWeight.SemiBold, color = color)
     }
 }
 
 @Composable
 private fun Header(title: String, onBack: () -> Unit) {
-    Row(Modifier.padding(horizontal = 4.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.detail_back)) }
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+    Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        BackButton(onBack)
+        Text(title, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
     }
 }
 
@@ -408,7 +492,7 @@ private fun Header(title: String, onBack: () -> Unit) {
 private fun NotFoundState(onBack: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Header("", onBack)
-        Centered { Text(stringResource(R.string.testdetail_not_found), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Centered { Text(stringResource(R.string.testdetail_not_found), color = T14Theme.colors.textSecondary) }
     }
 }
 

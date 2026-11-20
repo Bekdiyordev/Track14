@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Modifier
 import uz.beko404.track14.core.settings.ThemeMode
@@ -115,6 +116,7 @@ fun Track14App(
             GateState.Loading -> Unit
         }
         val navController = rememberNavController()
+        var showSignIn by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
         val t14 = T14Theme.colors
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = backStackEntry?.destination
@@ -176,12 +178,7 @@ fun Track14App(
                         onOpenApp = { id -> if (AppIds.isValid(id)) navController.navigate("$APP_DETAIL_ROUTE/$id") },
                         onOpenPublished = { navController.navigate(PUBLISHED_ROUTE) },
                         onOpenWallet = { navController.navigate(WALLET_ROUTE) },
-                        onSignIn = {
-                            navController.navigate(TopLevelDestination.Profile.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                            }
-                        },
+                        onSignIn = { showSignIn = true },
                     )
                 }
                 composable(PUBLISHED_ROUTE) {
@@ -321,6 +318,7 @@ fun Track14App(
                 }
                 composable(SHOP_ROUTE) { ShopRoute(onBack = { navController.popBackStack() }) }
             }
+            uz.beko404.track14.feature.auth.SignInSheet(visible = showSignIn, onDismiss = { showSignIn = false })
         }
         }
     }

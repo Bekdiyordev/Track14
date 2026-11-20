@@ -517,4 +517,10 @@
     <string name="top_sub_best">Kuniga %1$s · eng foydali</string>
     <string name="top_sub_popular">Kuniga ~%1$s · ko\'p tanlanadi</string>
     <string name="top_sub_try">Sinab ko\'rish uchun</string>
+    <string name="testdetail_since">%1$sdan</string>
+    <string name="testdetail_today_legend">Bugun</string>
+    <string name="signin_title">Davom etish uchun kiring</string>
+    <string name="signin_body">Testni boshlash uchun Google akkauntingiz kerak. Opt-in aynan shu akkaunt bilan qilinadi.</string>
+    <string name="signin_same_account">Telefoningizdagi Play Store akkaunti bilan bir xil akkauntni tanlang, aks holda test hisoblanmaydi.</string>
+    <string name="signin_consent">Kirish orqali maxfiylik siyosatiga rozilik bildirasiz.</string>
 </resources>
