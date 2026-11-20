@@ -18,6 +18,8 @@ data class Settings(
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val languageChosen: Boolean = false,
     val onboardingDone: Boolean = false,
+    val pushReminders: Boolean = true,
+    val pushOwner: Boolean = true,
 )
 
 /** Local preferences (not backed up, see data_extraction_rules). */
@@ -30,6 +32,8 @@ class SettingsStore @Inject constructor(@ApplicationContext context: Context) {
             theme = runCatching { ThemeMode.valueOf(prefs.getString(KEY_THEME, null) ?: "") }.getOrDefault(ThemeMode.SYSTEM),
             languageChosen = prefs.getBoolean(KEY_LANGUAGE_CHOSEN, false),
             onboardingDone = prefs.getBoolean(KEY_ONBOARDING, false),
+            pushReminders = prefs.getBoolean(KEY_PUSH_REMINDERS, true),
+            pushOwner = prefs.getBoolean(KEY_PUSH_OWNER, true),
         ),
     )
     val settings: StateFlow<Settings> = _settings.asStateFlow()
@@ -52,12 +56,19 @@ class SettingsStore @Inject constructor(@ApplicationContext context: Context) {
         return AppLanguage.entries.firstOrNull { it.tag == tag } ?: AppLanguage.UZ
     }
 
+    fun setPush(reminders: Boolean, owner: Boolean) {
+        prefs.edit().putBoolean(KEY_PUSH_REMINDERS, reminders).putBoolean(KEY_PUSH_OWNER, owner).apply()
+        _settings.value = _settings.value.copy(pushReminders = reminders, pushOwner = owner)
+    }
+
     fun completeOnboarding() {
         prefs.edit().putBoolean(KEY_ONBOARDING, true).apply()
         _settings.value = _settings.value.copy(onboardingDone = true)
     }
 
     private companion object {
+        const val KEY_PUSH_REMINDERS = "push_reminders"
+        const val KEY_PUSH_OWNER = "push_owner"
         const val KEY_THEME = "theme"
         const val KEY_LANGUAGE_CHOSEN = "language_chosen"
         const val KEY_ONBOARDING = "onboarding_done"

@@ -1,9 +1,18 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { channelFor, isDeadToken, langOf, messages, plain } from "../notify";
+import { channelFor, isDeadToken, langOf, messages, plain, pushAllowed } from "../notify";
 import { localHour } from "../reminders";
 
 describe("notifications", () => {
+  it("push switches mute only reminders and owner news", () => {
+    assert.equal(pushAllowed("daily_reminder", undefined, undefined), true);
+    assert.equal(pushAllowed("daily_reminder", false, true), false);
+    assert.equal(pushAllowed("tester_joined", true, false), false);
+    assert.equal(pushAllowed("feedback_received", true, false), false);
+    assert.equal(pushAllowed("test_failed", false, false), true);
+    assert.equal(pushAllowed("app_suspended", false, false), true);
+  });
+
   it("messages are short and typed", () => {
     const m = messages.dailyReminder(3);
     assert.equal(m.type, "daily_reminder");

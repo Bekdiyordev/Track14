@@ -54,6 +54,9 @@ interface ProfileRepository {
     /** Language of push and inbox texts (users/{uid}.lang). */
     suspend fun updateLanguage(uid: String, languageTag: String)
 
+    /** Push switches (users/{uid}.notifyReminders / notifyOwner); the inbox is always kept. */
+    suspend fun updatePushPrefs(uid: String, reminders: Boolean, owner: Boolean)
+
     fun observeStats(uid: String): Flow<TesterStats>
 }
 

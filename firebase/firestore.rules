@@ -45,7 +45,9 @@ service cloud.firestore {
         && optString(d, 'country', 8)
         && optString(d, 'timezone', 64)
         && optString(d, 'deviceModel', 100)
-        && (d.get('usageAccess', false) is bool);
+        && (d.get('usageAccess', false) is bool)
+        && (d.get('notifyReminders', true) is bool)
+        && (d.get('notifyOwner', true) is bool);
     }
 
     // ---------- users ----------
@@ -60,7 +62,7 @@ service cloud.firestore {
         && validProfile(request.resource.data);
       allow update: if isUser(uid) && !isBlocked()
         && onlyChanges(['displayName', 'photoUrl', 'lang', 'country', 'timezone',
-                        'deviceModel', 'usageAccess'])
+                        'deviceModel', 'usageAccess', 'notifyReminders', 'notifyOwner'])
         && validProfile(request.resource.data);
       allow delete: if false;
 

@@ -528,4 +528,17 @@
     <string name="pack_note_2000">1 Pro listing + change</string>
     <string name="pack_note_5000">Pro + 7 days on top + change</string>
     <string name="pack_note_10000">For several apps</string>
+    <string name="settings_language_caps">LANGUAGE</string>
+    <string name="settings_theme_caps">THEME</string>
+    <string name="settings_notifications_caps">NOTIFICATIONS</string>
+    <string name="settings_permissions_caps">PERMISSIONS AND STATUS</string>
+    <string name="settings_other_caps">OTHER</string>
+    <string name="settings_push_reminders">Daily reminder</string>
+    <string name="settings_push_reminders_sub">In the evening if today\'s task is not done</string>
+    <string name="settings_push_owner">My apps news</string>
+    <string name="settings_push_owner_sub">New tester, feedback</string>
+    <string name="settings_granted">Granted</string>
+    <string name="settings_not_granted">Not granted</string>
+    <string name="settings_version_label">Version</string>
+    <string name="settings_delete_note">All data and Coin14 are deleted for good. Active tests end.</string>
 </resources>

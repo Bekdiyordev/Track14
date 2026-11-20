@@ -61,6 +61,14 @@ class SettingsViewModel @Inject constructor(
 
     fun setTheme(mode: ThemeMode) = store.setTheme(mode)
 
+    /** Saved on the device at once and mirrored to the account so the server mutes the push. */
+    fun setPush(reminders: Boolean, owner: Boolean) {
+        store.setPush(reminders, owner)
+        viewModelScope.launch {
+            (auth.session.first() as? Session.SignedIn)?.let { profiles.updatePushPrefs(it.uid, reminders, owner) }
+        }
+    }
+
     fun setLanguage(language: AppLanguage) {
         viewModelScope.launch {
             (auth.session.first() as? Session.SignedIn)?.let { profiles.updateLanguage(it.uid, language.tag) }

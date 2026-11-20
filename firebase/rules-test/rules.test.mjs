@@ -53,6 +53,8 @@ describe("users", () => {
     await assertSucceeds(updateDoc(doc(as(ALICE), "users", ALICE), { blocked: false, lang: "en" }));
     await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { blocked: true, lang: "en" }));
     await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { "stats.testsCompleted": 99 }));
+    await assertSucceeds(updateDoc(doc(as(ALICE), "users", ALICE), { notifyReminders: false, notifyOwner: true }));
+    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { notifyOwner: "no" }));
   });
 
   it("blocked users cannot edit their profile", async () => {

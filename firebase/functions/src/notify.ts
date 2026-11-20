@@ -104,7 +104,8 @@ const MAX_TOKENS = 10;
 export async function notify(uid: string, message: Message): Promise<void> {
   const db = getFirestore();
   const user = db.collection("users").doc(uid);
-  const { title, body } = message.text[langOf((await user.get()).get("lang"))];
+  const profile = await user.get();
+  const { title, body } = message.text[langOf(profile.get("lang"))];
   await user.collection("notifications").add({
     type: message.type,
     title,
@@ -114,6 +115,8 @@ export async function notify(uid: string, message: Message): Promise<void> {
     createdAt: FieldValue.serverTimestamp(),
   });
 
+  // The inbox entry is always written; only the push respects the user's switches.
+  if (!pushAllowed(message.type, profile.get("notifyReminders"), profile.get("notifyOwner"))) return;
   const tokens = await user.collection("tokens").limit(MAX_TOKENS).get();
   if (tokens.empty) return;
   const result = await getMessaging().sendEachForMulticast({
@@ -128,6 +131,13 @@ export async function notify(uid: string, message: Message): Promise<void> {
     .map(({ id }) => user.collection("tokens").doc(id).delete());
   await Promise.all(dead);
   if (result.failureCount > 0) logger.info("push partial failure", { uid, failures: result.failureCount });
+}
+
+/** Owner news can be muted; reminders can be muted; account and money events always push. */
+export function pushAllowed(type: NotificationType, reminders: unknown, owner: unknown): boolean {
+  if (type === "daily_reminder") return reminders !== false;
+  if (type === "tester_joined" || type === "feedback_received") return owner !== false;
+  return true;
 }
 
 export function channelFor(type: NotificationType): string {

@@ -39,6 +39,13 @@ class FirestoreProfileRepository @Inject constructor(
         runCatching { firestore.collection("users").document(uid).update("lang", languageTag).await() }
     }
 
+    override suspend fun updatePushPrefs(uid: String, reminders: Boolean, owner: Boolean) {
+        runCatching {
+            firestore.collection("users").document(uid)
+                .update(mapOf("notifyReminders" to reminders, "notifyOwner" to owner)).await()
+        }
+    }
+
     override fun observeStats(uid: String): Flow<TesterStats> = callbackFlow {
         val registration = firestore.collection("users").document(uid).addSnapshotListener { snapshot, _ ->
             trySend(statsFrom(snapshot?.get("stats") as? Map<*, *>))

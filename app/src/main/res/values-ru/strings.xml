@@ -528,4 +528,17 @@
     <string name="pack_note_2000">1 размещение Pro + остаток</string>
     <string name="pack_note_5000">Pro + 7 дней в топе + остаток</string>
     <string name="pack_note_10000">Для нескольких приложений</string>
+    <string name="settings_language_caps">ЯЗЫК</string>
+    <string name="settings_theme_caps">ТЕМА</string>
+    <string name="settings_notifications_caps">УВЕДОМЛЕНИЯ</string>
+    <string name="settings_permissions_caps">РАЗРЕШЕНИЯ И СТАТУС</string>
+    <string name="settings_other_caps">ДРУГОЕ</string>
+    <string name="settings_push_reminders">Ежедневное напоминание</string>
+    <string name="settings_push_reminders_sub">Вечером, если задание на сегодня не выполнено</string>
+    <string name="settings_push_owner">Новости моих приложений</string>
+    <string name="settings_push_owner_sub">Новый тестер, отзыв</string>
+    <string name="settings_granted">Выдано</string>
+    <string name="settings_not_granted">Не выдано</string>
+    <string name="settings_version_label">Версия</string>
+    <string name="settings_delete_note">Все данные и Coin14 будут удалены навсегда. Активные тесты прервутся.</string>
 </resources>

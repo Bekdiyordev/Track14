@@ -123,6 +123,8 @@ class AuthViewModelTest {
 
         override suspend fun updateLanguage(uid: String, languageTag: String) = Unit
 
+        override suspend fun updatePushPrefs(uid: String, reminders: Boolean, owner: Boolean) = Unit
+
         override fun observeStats(uid: String): Flow<uz.beko404.track14.domain.model.TesterStats> =
             MutableStateFlow(uz.beko404.track14.domain.model.TesterStats())
     }

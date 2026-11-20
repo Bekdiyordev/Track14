@@ -534,4 +534,17 @@
     <string name="pack_note_2000">1 ta Pro joylash + qoldiq</string>
     <string name="pack_note_5000">Pro + 7 kunlik top + qoldiq</string>
     <string name="pack_note_10000">Bir nechta ilova uchun</string>
+    <string name="settings_language_caps">TIL</string>
+    <string name="settings_theme_caps">MAVZU</string>
+    <string name="settings_notifications_caps">BILDIRISHNOMALAR</string>
+    <string name="settings_permissions_caps">RUXSATLAR VA HOLAT</string>
+    <string name="settings_other_caps">BOSHQA</string>
+    <string name="settings_push_reminders">Kunlik eslatma</string>
+    <string name="settings_push_reminders_sub">Kechqurun, bugungi vazifa bajarilmagan bo\'lsa</string>
+    <string name="settings_push_owner">Ilovalarim yangiliklari</string>
+    <string name="settings_push_owner_sub">Yangi tester, feedback</string>
+    <string name="settings_granted">Berilgan</string>
+    <string name="settings_not_granted">Berilmagan</string>
+    <string name="settings_version_label">Versiya</string>
+    <string name="settings_delete_note">Barcha ma\'lumotlar va Coin14 butunlay o\'chiriladi. Aktiv testlar uziladi.</string>
 </resources>
