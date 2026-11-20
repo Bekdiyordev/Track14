@@ -89,8 +89,6 @@ fun Track14App(
                 darkTheme = darkTheme,
                 onToggleTheme = { settingsViewModel.setTheme(if (darkTheme) ThemeMode.LIGHT else ThemeMode.DARK) },
                 onContinue = settingsViewModel::confirmLanguage,
-                theme = settings.theme,
-                onTheme = settingsViewModel::setTheme,
             )
             return@Track14Theme
         }
