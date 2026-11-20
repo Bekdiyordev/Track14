@@ -570,4 +570,5 @@
     <string name="support_app_caps">ПРИЛОЖЕНИЕ</string>
     <string name="support_check_update">Проверить обновления</string>
     <string name="published_on">вышло %1$s</string>
+    <string name="tab_my_apps_short">Мои</string>
 </resources>
