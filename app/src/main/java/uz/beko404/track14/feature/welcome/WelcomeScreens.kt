@@ -53,8 +53,7 @@ fun LanguageScreen(
     darkTheme: Boolean,
     onToggleTheme: () -> Unit,
     onContinue: (AppLanguage) -> Unit,
-    theme: ThemeMode? = null,
-    onTheme: (ThemeMode) -> Unit = {},
+    onSelect: (AppLanguage) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf(current) }
     val c = T14Theme.colors
@@ -105,13 +104,7 @@ fun LanguageScreen(
                     Text(stringResource(R.string.lang_subtitle), fontSize = 14.sp, color = c.textSecondary)
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    AppLanguage.entries.forEach { lang -> LanguageOption(lang, selected == lang) { selected = lang } }
-                }
-                if (theme != null) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.settings_theme_caps), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.textSecondary, letterSpacing = 0.4.sp)
-                        ThemeSegmented(theme, onTheme)
-                    }
+                    AppLanguage.entries.forEach { lang -> LanguageOption(lang, selected == lang) { selected = lang; onSelect(lang) } }
                 }
                 PrimaryButton(stringResource(R.string.action_continue), onClick = { onContinue(selected) }, height = 56.dp)
             }
@@ -121,37 +114,6 @@ fun LanguageScreen(
 
 private const val MOON = "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"
 private const val SUN = "M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"
-private const val SCREEN = "M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M8 21h8M12 17v4"
-
-@Composable
-private fun ThemeSegmented(theme: ThemeMode, onTheme: (ThemeMode) -> Unit) {
-    val c = T14Theme.colors
-    Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(if (c.dark) Color(0xFF1E293B) else Color(0xFFE5E7EB)).padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        listOf(
-            Triple(ThemeMode.LIGHT, R.string.theme_light, SUN),
-            Triple(ThemeMode.DARK, R.string.theme_dark, MOON),
-            Triple(ThemeMode.SYSTEM, R.string.theme_system, SCREEN),
-        ).forEach { (mode, label, icon) ->
-            val on = mode == theme
-            Row(
-                Modifier.weight(1f).height(40.dp)
-                    .then(if (on) Modifier.shadow(1.dp, RoundedCornerShape(12.dp)) else Modifier)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (on) (if (c.dark) Color(0xFF334155) else Color.White) else Color.Transparent)
-                    .clickable(role = Role.RadioButton) { onTheme(mode) },
-                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val fg = if (on) MaterialTheme.colorScheme.onSurface else c.textBody
-                T14Icon(icon, size = 16.dp, tint = fg, strokeWidth = 2.2f)
-                Text(stringResource(label), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = fg)
-            }
-        }
-    }
-}
 
 @Composable
 private fun LanguageOption(lang: AppLanguage, selected: Boolean, onClick: () -> Unit) {

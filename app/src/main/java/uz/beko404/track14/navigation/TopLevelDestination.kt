@@ -14,6 +14,6 @@ enum class TopLevelDestination(
 ) {
     Apps("apps", R.string.tab_apps, t14Vector("apps", T14Paths.Apps)),
     MyTests("my_tests", R.string.tab_my_tests, t14Vector("tests", T14Paths.Tests)),
-    MyApps("my_apps", R.string.tab_my_apps, t14Vector("myApps", T14Paths.MyApps)),
+    MyApps("my_apps", R.string.nav_my_apps, t14Vector("myApps", T14Paths.MyApps)),
     Profile("profile", R.string.tab_profile, t14Vector("profile", T14Paths.Profile)),
 }

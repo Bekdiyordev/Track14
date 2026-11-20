@@ -2,6 +2,7 @@
     <string name="tab_apps">Apps</string>
     <string name="tab_my_tests">My tests</string>
     <string name="tab_my_apps">My apps</string>
+    <string name="nav_my_apps">My apps</string>
     <string name="tab_profile">Profile</string>
     <string name="placeholder_soon">Coming soon</string>
     <string name="profile_signed_out_title">Sign in to your account</string>

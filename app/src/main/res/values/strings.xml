@@ -3,6 +3,7 @@
     <string name="tab_apps">Ilovalar</string>
     <string name="tab_my_tests">Testlarim</string>
     <string name="tab_my_apps">Mening ilovalarim</string>
+    <string name="nav_my_apps">Ilovalarim</string>
     <string name="tab_profile">Profil</string>
     <string name="placeholder_soon">Tez orada</string>
     <string name="profile_signed_out_title">Hisobingizga kiring</string>

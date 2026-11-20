@@ -50,6 +50,12 @@ class SettingsStore @Inject constructor(@ApplicationContext context: Context) {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
     }
 
+    /** Language screen preview: switch the UI language without marking the choice as made. */
+    fun previewLanguage(language: AppLanguage) {
+        if (currentLanguage() == language) return
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
+    }
+
     fun currentLanguage(): AppLanguage {
         val tag = AppCompatDelegate.getApplicationLocales()[0]?.language
             ?: java.util.Locale.getDefault().language
