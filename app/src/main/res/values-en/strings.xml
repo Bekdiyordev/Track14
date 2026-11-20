@@ -569,4 +569,5 @@
     <string name="support_faq_caps">FAQ</string>
     <string name="support_app_caps">APP</string>
     <string name="support_check_update">Check for updates</string>
+    <string name="published_on">shipped %1$s</string>
 </resources>

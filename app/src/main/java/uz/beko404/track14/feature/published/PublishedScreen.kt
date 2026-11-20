@@ -1,5 +1,8 @@
 package uz.beko404.track14.feature.published
 
+import androidx.compose.foundation.layout.Spacer
+import uz.beko404.track14.core.designsystem.T14Card
+import uz.beko404.track14.core.designsystem.BackButton
 import uz.beko404.track14.core.designsystem.Manrope
 import uz.beko404.track14.core.designsystem.T14Theme
 import uz.beko404.track14.core.designsystem.T14Paths
@@ -76,21 +79,25 @@ fun PublishedRoute(onBack: () -> Unit, viewModel: PublishedViewModel = hiltViewM
     val apps by viewModel.apps.collectAsStateWithLifecycle()
     val totals by viewModel.totals.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val c = T14Theme.colors
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.detail_back))
-            }
-            Text(stringResource(R.string.published_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+        Row(
+            Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            BackButton(onBack)
+            Text(stringResource(R.string.published_title), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, maxLines = 1)
         }
-        LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { TotalsCard(totals) }
+            item { Spacer(Modifier.height(8.dp)) }
             val list = apps
             when {
                 list == null -> item { SkeletonList(count = 4) }
                 list.isEmpty() -> item {
-                    Text(stringResource(R.string.published_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                    T14Card { Text(stringResource(R.string.published_empty), color = c.textBody, fontSize = 15.sp, lineHeight = 22.sp) }
                 }
                 else -> items(list, key = { it.id }) { app ->
                     PublishedCard(app, onOpenStore = { ExternalLinks.openStorePage(context, app.packageName) }, modifier = Modifier.animateItem())
@@ -102,38 +109,53 @@ fun PublishedRoute(onBack: () -> Unit, viewModel: PublishedViewModel = hiltViewM
 
 @Composable
 private fun TotalsCard(totals: PublishedTotals) {
+    val shape = RoundedCornerShape(22.dp)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Brush.linearGradient(listOf(Track14Colors.Blue500, Track14Colors.Blue700, Color(0xFF1E3A8A))), RoundedCornerShape(22.dp))
+        Modifier.fillMaxWidth()
+            .shadow(14.dp, shape, ambientColor = Color(0x472563EB), spotColor = Color(0x472563EB))
+            .clip(shape)
+            .background(Brush.linearGradient(0f to Color(0xFF3B82F6), 0.7f to Color(0xFF1D4ED8), 1f to Color(0xFF1E3A8A)))
             .padding(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Total(totals.count.toString(), stringResource(R.string.published_count), Modifier.weight(1f))
-        Total(totals.testers.toString(), stringResource(R.string.published_testers), Modifier.weight(1f))
+        Total(uz.beko404.track14.feature.common.formatCoins(totals.testers.toLong()), stringResource(R.string.published_testers), Modifier.weight(1f))
     }
 }
 
 @Composable
 private fun Total(value: String, label: String, modifier: Modifier) {
-    Column(modifier = modifier) {
-        Text(value, color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-        Text(label, color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(value, color = Color.White, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp)
+        Text(label, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
     }
 }
 
 @Composable
 private fun PublishedCard(app: PublishedApp, onOpenStore: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp)).padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    val c = T14Theme.colors
+    T14Card(modifier, radius = 20.dp, padding = PaddingValues(14.dp), spacing = 12.dp) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            AppTile(app.id, app.name, size = 52.dp)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(app.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(app.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            AppTile(app.id, app.name, size = 52.dp, category = app.category)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(app.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                val date = if (app.publishedAtMillis > 0) {
+                    java.time.Instant.ofEpochMilli(app.publishedAtMillis).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("d-MMM"))
+                } else {
+                    null
+                }
+                Text(
+                    listOfNotNull(app.category.ifBlank { null }, date?.let { stringResource(R.string.published_on, it) }).joinToString(" · "),
+                    fontSize = 12.sp, color = c.textSecondary, maxLines = 1,
+                )
             }
-            app.rating?.let { Text("★ %.1f".format(it), fontWeight = FontWeight.Bold) }
+            app.rating?.let {
+                Text(
+                    "★ " + "%.1f".format(it), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(c.divider).padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Stat(app.testers.toString(), stringResource(R.string.published_stat_testers), Modifier.weight(1f))
@@ -141,14 +163,15 @@ private fun PublishedCard(app: PublishedApp, onOpenStore: () -> Unit, modifier: 
             Stat(app.feedbackCount.toString(), stringResource(R.string.published_stat_feedback), Modifier.weight(1f))
         }
         if (app.packageName.isNotEmpty()) {
-            Button(
-                onClick = onOpenStore,
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Track14Colors.Navy, contentColor = Color.White),
+            Row(
+                Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(14.dp))
+                    .background(if (c.dark) Color(0xFFF1F5F9) else Color(0xFF0F172A)).clickable(onClick = onOpenStore),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                Text(stringResource(R.string.published_open_play), modifier = Modifier.padding(start = 6.dp))
+                val fg = if (c.dark) Color(0xFF0B1220) else Color.White
+                T14Icon("M5 3l14 9-14 9z", size = 18.dp, tint = fg)
+                Text(stringResource(R.string.published_open_play), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = fg)
             }
         }
     }
@@ -156,9 +179,13 @@ private fun PublishedCard(app: PublishedApp, onOpenStore: () -> Unit, modifier: 
 
 @Composable
 private fun Stat(value: String, label: String, modifier: Modifier) {
-    Column(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).padding(10.dp)) {
-        Text(value, fontWeight = FontWeight.ExtraBold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val c = T14Theme.colors
+    Column(
+        modifier.clip(RoundedCornerShape(12.dp)).background(if (c.dark) Color(0xFF0F172A) else Color(0xFFF8FAFC)).padding(horizontal = 10.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+    ) {
+        Text(value, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+        Text(label, fontSize = 11.sp, color = c.textSecondary)
     }
 }
 

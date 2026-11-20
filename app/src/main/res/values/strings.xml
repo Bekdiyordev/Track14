@@ -575,4 +575,5 @@
     <string name="support_faq_caps">TEZ-TEZ SO\'RALADIGAN SAVOLLAR</string>
     <string name="support_app_caps">ILOVA</string>
     <string name="support_check_update">Yangilanishni tekshirish</string>
+    <string name="published_on">%1$s chiqqan</string>
 </resources>
