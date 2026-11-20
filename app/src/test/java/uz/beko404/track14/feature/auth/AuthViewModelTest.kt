@@ -1,6 +1,7 @@
 package uz.beko404.track14.feature.auth
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,6 +79,19 @@ class AuthViewModelTest {
         assertEquals(emptyList<Session.SignedIn>(), profiles.created)
     }
 
+    @Test
+    fun `profile waiting for network does not keep login busy`() = runTest {
+        val completion = CompletableDeferred<Unit>()
+        profiles.completion = completion
+
+        viewModel.signIn { DomainResult.Success("token") }
+        current()
+
+        assertEquals(listOf(user), profiles.created)
+        assertEquals(false, viewModel.state.value.isSigningIn)
+        completion.complete(Unit)
+    }
+
     private inner class FakeAuth : AuthRepository {
         val sessionFlow = MutableStateFlow<Session>(Session.SignedOut)
         var lastToken: String? = null
@@ -99,9 +113,11 @@ class AuthViewModelTest {
 
     private class FakeProfiles : ProfileRepository {
         val created = mutableListOf<Session.SignedIn>()
+        var completion: CompletableDeferred<Unit>? = null
 
         override suspend fun ensureProfile(user: Session.SignedIn): DomainResult<Unit> {
             created += user
+            completion?.await()
             return DomainResult.Success(Unit)
         }
 

@@ -22,6 +22,10 @@ beforeEach(() => env.clearFirestore());
 const as = (uid, claims = {}) => env.authenticatedContext(uid, claims).firestore();
 const anon = () => env.unauthenticatedContext().firestore();
 const seed = (fn) => env.withSecurityRulesDisabled((ctx) => fn(ctx.firestore()));
+const seedUsers = () => seed((db) => Promise.all([
+  setDoc(doc(db, "users", ALICE), { displayName: "Alice", blocked: false }),
+  setDoc(doc(db, "users", BOB), { displayName: "Bob", blocked: false }),
+]));
 
 const profile = (extra = {}) => ({
   displayName: "Alice",
@@ -46,7 +50,8 @@ describe("users", () => {
   it("cannot touch server fields", async () => {
     await seed((db) => setDoc(doc(db, "users", ALICE), { displayName: "Alice", stats: {}, blocked: false }));
     await assertSucceeds(updateDoc(doc(as(ALICE), "users", ALICE), { lang: "ru" }));
-    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { blocked: false, lang: "en" }));
+    await assertSucceeds(updateDoc(doc(as(ALICE), "users", ALICE), { blocked: false, lang: "en" }));
+    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { blocked: true, lang: "en" }));
     await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { "stats.testsCompleted": 99 }));
   });
 
@@ -97,6 +102,7 @@ describe("money and server-only collections", () => {
 });
 
 describe("apps", () => {
+  beforeEach(seedUsers);
   const draft = (extra = {}) => ({
     ownerUid: ALICE,
     status: "draft",
@@ -125,6 +131,7 @@ describe("apps", () => {
 });
 
 describe("feedback", () => {
+  beforeEach(seedUsers);
   beforeEach(() => seed((db) => setDoc(doc(db, "tests", "t1"), { testerUid: ALICE, ownerUid: BOB, appId: "a1" })));
   const fb = (extra = {}) => ({
     testId: "t1",
@@ -148,6 +155,7 @@ describe("feedback", () => {
 });
 
 describe("reports", () => {
+  beforeEach(seedUsers);
   const report = { reporterUid: ALICE, targetType: "app", targetId: "a1", reason: "spam", status: "open", createdAt: serverTimestamp() };
 
   it("users file open reports; nobody edits them from a client", async () => {

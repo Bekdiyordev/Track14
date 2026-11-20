@@ -5,5 +5,5 @@
   Do not name it default_web_client_id: the google-services plugin generates that one.
 -->
 <resources>
-    <string name="google_web_client_id" translatable="false">REPLACE_WITH_WEB_CLIENT_ID</string>
+    <string name="google_web_client_id" translatable="false">282255323635-28v46oqs0l4fquggoiq2fi2df8vshabn.apps.googleusercontent.com</string>
 </resources>

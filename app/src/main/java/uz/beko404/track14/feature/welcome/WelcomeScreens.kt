@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -63,7 +64,7 @@ fun LanguageScreen(
     onContinue: (AppLanguage) -> Unit,
 ) {
     var selected by remember { mutableStateOf(current) }
-    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(24.dp)) {
+    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(24.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             // Theme toggle: sun in dark mode, moon in light mode (canvas decision), monochrome.
             IconButton(
@@ -150,7 +151,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     val last = pager.currentPage == slides.lastIndex
 
-    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(24.dp)) {
+    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(24.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             if (!last) TextButton(onClick = onDone) { Text(stringResource(R.string.onb_skip)) }
         }

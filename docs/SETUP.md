@@ -1,7 +1,36 @@
+# Firebase setup status (20 November 2026)
+
+Project: `track14-c2822`. Both Android apps are registered, their debug SHA-1 and
+SHA-256 fingerprints are added, and Google sign-in is enabled. Downloaded SDK
+configurations and the real Web client ID are included in both modules.
+
+- Firestore `(default)` exists in `europe-central2`; production security rules and
+  all 12 composite indexes have been deployed. The four starting `config` documents
+  have been created without overwriting existing data.
+- App Check terms have been accepted. Samsung QA debug tokens for both apps have
+  been registered; their secret values stay outside Git. Play Integrity provider
+  registration and API enforcement still need completion and device verification.
+- Billing is intentionally deferred at the owner's request. Cloud Functions and
+  the `auditLogs.expireAt` TTL policy are **not deployed**. Full backend flows,
+  purchases, account deletion and scheduled work cannot be validated yet.
+- The first superadmin is approved for `abekdiyor@gmail.com`. That Google account
+  must first complete Firebase sign-in before the role can be assigned. Samsung
+  QA currently encounters connection timeouts to Google Auth/App Check on Wi-Fi
+  (IPv4 TCP succeeds; IPv6 TCP times out); no successful Firebase login is claimed.
+- Both debug APKs build, unit tests and lint pass. The admin login now displays
+  errors and permits retry; Firebase sign-in stops waiting after 30 seconds in both
+  apps. User profile setup does not keep the main login busy while offline.
+
+Resume with working device connectivity, finish App Check, assign the approved
+role and test both apps. Once billing is connected, deploy Firestore including TTL
+and Functions, then verify the server-dependent flows before release. Existing
+Auth users created before `onUserCreated` is deployed will need an idempotent
+welcome-wallet backfill; the Auth creation trigger does not replay old users.
+
 # Setup: Google sign-in
 
-`app/google-services.json` currently has an empty `oauth_client` list, so Google sign-in
-is not enabled yet. Do this once:
+The following describes setup for a new project or signing key. The current debug
+configuration is already complete for both `:app` and `:admin`:
 
 1. Firebase console > Authentication > Sign-in method > enable **Google**.
 2. Get the debug SHA-1 and add it in Project settings > Your apps > Android > Add fingerprint:
@@ -11,7 +40,7 @@ is not enabled yet. Do this once:
    Add the release/upload key SHA-1 and the Play App Signing SHA-1 later, before launch.
 3. Download `google-services.json` again and replace `app/google-services.json`.
 4. Authentication > Sign-in method > Google > Web SDK configuration: copy the **Web client ID**
-   into `app/src/main/res/values/auth_config.xml` (`google_web_client_id`).
+   into both modules' `src/main/res/values/auth_config.xml` (`google_web_client_id`).
 5. App Check: run a debug build once, copy the token from Logcat and register it under App Check > Apps > Debug tokens.
 
 # Setup: Firebase backend (once, in the console / terminal)
@@ -24,7 +53,8 @@ is not enabled yet. Do this once:
        cd firebase/functions && npm install && npm test && cd ..
        firebase deploy --only firestore,functions --project track14-c2822
 
-10. App Check > enforce for Firestore and Cloud Functions once the debug token works.
+10. App Check > enforce for Firestore once valid app tokens are verified. Callable
+    Functions already require App Check outside the local emulator in code.
 
 # Setup: Coin14 purchases (Play Billing)
 
@@ -57,9 +87,10 @@ The admin app lives in this project as a separate Android module with its own pa
 `uz.beko404.track14.admin`. It uses the same Firebase project; every action goes through the
 `admin*` Cloud Functions, which check the staff role on the server.
 
-17. Firebase console > Project settings > Add app > Android: package `uz.beko404.track14.admin`,
-    add the debug SHA-1 (and later the release SHA-1). Download its `google-services.json` into
-    `admin/` (not `app/`).
+17. The Android app `uz.beko404.track14.admin` is registered in `track14-c2822` as
+    `1:282255323635:android:e32237d56005d8fe76e286`; its downloaded configuration is
+    `admin/google-services.json`. The current development machine's debug SHA-1 and SHA-256
+    are registered. Add the release signing certificates before distributing a release build.
 18. Put the same Web client ID as the user app into `admin/src/main/res/values/auth_config.xml`.
 19. App Check > Apps: register the admin app with Play Integrity; in debug, add the debug token
     printed in Logcat (`DebugAppCheckProvider`).

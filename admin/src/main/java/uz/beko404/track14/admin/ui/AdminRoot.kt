@@ -24,6 +24,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +50,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import uz.beko404.track14.admin.R
 import uz.beko404.track14.admin.core.signInWithGoogle
+import uz.beko404.track14.admin.core.GoogleSignInResult
 import uz.beko404.track14.admin.feature.ARG_ID
 import uz.beko404.track14.admin.feature.AdminSession
 import uz.beko404.track14.admin.feature.AppDetailScreen
@@ -96,14 +100,32 @@ private fun LoginScreen(onSignedIn: () -> Unit) {
     val context = LocalContext.current
     val webClientId = stringResource(R.string.google_web_client_id)
     val scope = rememberCoroutineScope()
+    var signingIn by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
     Centered {
         Text("Track14 Admin", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
         Text("Faqat xodimlar uchun. Kirish Google akkaunti va admin roli bilan.", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Button(
-            onClick = { scope.launch { if (signInWithGoogle(context, webClientId, FirebaseAuth.getInstance())) onSignedIn() } },
+            onClick = {
+                scope.launch {
+                    signingIn = true
+                    error = null
+                    try {
+                        when (val result = signInWithGoogle(context, webClientId, FirebaseAuth.getInstance())) {
+                            GoogleSignInResult.SignedIn -> onSignedIn()
+                            GoogleSignInResult.Cancelled -> Unit
+                            is GoogleSignInResult.Failed -> error = result.message
+                        }
+                    } finally {
+                        signingIn = false
+                    }
+                }
+            },
+            enabled = !signingIn,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(16.dp),
-        ) { Text("Google bilan kirish") }
+        ) { Text(if (signingIn) "Kirilmoqda…" else "Google bilan kirish") }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center) }
     }
 }
 

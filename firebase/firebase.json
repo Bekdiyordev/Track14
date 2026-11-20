@@ -1,5 +1,7 @@
 {
   "firestore": {
+    "database": "(default)",
+    "location": "europe-central2",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
@@ -61,5 +63,13 @@
         ]
       }
     ]
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Track14",
+        "supportEmail": "abekdiyor@gmail.com"
+      }
+    }
   }
 }

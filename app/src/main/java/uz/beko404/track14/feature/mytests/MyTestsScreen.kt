@@ -55,6 +55,7 @@ import uz.beko404.track14.core.device.ExternalLinks
 import uz.beko404.track14.core.notifications.Channels
 import uz.beko404.track14.domain.model.TestStatus
 import uz.beko404.track14.domain.model.TesterTest
+import uz.beko404.track14.domain.repository.DomainError
 import uz.beko404.track14.feature.auth.AuthViewModel
 import uz.beko404.track14.feature.auth.rememberGoogleIdTokenClient
 import uz.beko404.track14.feature.messageRes
@@ -109,6 +110,7 @@ fun MyTestsRoute(
         MyTestsScreen(
             state = state,
             isSigningIn = auth.isSigningIn,
+            signInError = auth.error,
             onSignIn = { authViewModel.signIn { tokenClient.getIdToken() } },
             onOpenApp = { test ->
                 viewModel.onOpenApp(test)
@@ -147,12 +149,16 @@ fun MyTestsScreen(
     onLeave: (TesterTest) -> Unit,
     onFeedback: (TesterTest) -> Unit,
     onOpenTest: (TesterTest) -> Unit = {},
+    signInError: DomainError? = null,
 ) {
     when (state) {
         MyTestsUiState.Loading -> SkeletonList(count = 3, withDays = true, modifier = Modifier.padding(20.dp))
         MyTestsUiState.SignedOut -> Centered {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.mytests_signed_out), style = MaterialTheme.typography.bodyLarge)
+                signInError?.let { error ->
+                    Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error)
+                }
                 Button(onClick = onSignIn, enabled = !isSigningIn) { Text(stringResource(R.string.sign_in_google)) }
             }
         }

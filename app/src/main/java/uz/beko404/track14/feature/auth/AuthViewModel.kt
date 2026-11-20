@@ -50,15 +50,18 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             signingIn.value = true
             error.value = null
-            when (val token = requestToken()) {
-                is DomainResult.Failure -> reportError(token.error)
-                is DomainResult.Success -> when (val result = auth.signInWithGoogle(token.value)) {
-                    is DomainResult.Failure -> reportError(result.error)
-                    // A failed profile write is retried on the next sign-in; it must not block login.
-                    is DomainResult.Success -> profiles.ensureProfile(result.value)
+            try {
+                when (val token = requestToken()) {
+                    is DomainResult.Failure -> reportError(token.error)
+                    is DomainResult.Success -> when (val result = auth.signInWithGoogle(token.value)) {
+                        is DomainResult.Failure -> reportError(result.error)
+                        // Firestore can wait for connectivity; profile setup must not block login.
+                        is DomainResult.Success -> launch { profiles.ensureProfile(result.value) }
+                    }
                 }
+            } finally {
+                signingIn.value = false
             }
-            signingIn.value = false
         }
     }
 

@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import uz.beko404.track14.data.callFunction
 import uz.beko404.track14.data.toDomainError
 import uz.beko404.track14.domain.repository.AuthRepository
@@ -31,13 +34,17 @@ class FirebaseAuthRepository @Inject constructor(
     override suspend fun signInWithGoogle(idToken: String): DomainResult<Session.SignedIn> =
         try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val user = auth.signInWithCredential(credential).await().user
+            val user = withTimeout(30_000) { auth.signInWithCredential(credential).await().user }
             val session = user.toSession()
             if (session is Session.SignedIn) {
                 DomainResult.Success(session)
             } else {
                 DomainResult.Failure(DomainError.Unauthenticated)
             }
+        } catch (_: TimeoutCancellationException) {
+            DomainResult.Failure(DomainError.Network)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             DomainResult.Failure(e.toDomainError())
         }

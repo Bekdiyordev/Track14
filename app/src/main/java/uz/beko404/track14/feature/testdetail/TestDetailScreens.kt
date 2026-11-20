@@ -35,7 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -71,14 +71,14 @@ fun TestDetailRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
     var confirmLeave by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel, resources) {
         viewModel.messages.collect { e ->
             when (e) {
                 TestDetailEvent.Left -> onBack()
-                is TestDetailEvent.Failed -> snackbar.showSnackbar(context.getString(e.error.messageRes()))
+                is TestDetailEvent.Failed -> snackbar.showSnackbar(resources.getString(e.error.messageRes()))
             }
         }
     }

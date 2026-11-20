@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Track14</string>
+    <string name="app_name" translatable="false">Track14</string>
     <string name="tab_apps">Ilovalar</string>
     <string name="tab_my_tests">Testlarim</string>
     <string name="tab_my_apps">Mening ilovalarim</string>

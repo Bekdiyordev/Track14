@@ -56,6 +56,9 @@ fun MyAppsRoute(
         MyAppsUiState.SignedOut -> Centered {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.myapps_signed_out), style = MaterialTheme.typography.bodyLarge)
+                auth.error?.let { error ->
+                    Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error)
+                }
                 Button(onClick = { authViewModel.signIn { tokenClient.getIdToken() } }, enabled = !auth.isSigningIn) {
                     Text(stringResource(R.string.sign_in_google))
                 }
