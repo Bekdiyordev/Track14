@@ -4,6 +4,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import uz.beko404.track14.core.designsystem.ScreenBackground
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -103,15 +110,24 @@ fun Track14App(
             GateState.Loading -> Unit
         }
         val navController = rememberNavController()
+        val barLine = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = backStackEntry?.destination
         val onTopLevel = TopLevelDestination.entries.any { tab ->
             currentDestination?.hierarchy?.any { it.route == tab.route } == true
         }
 
+        ScreenBackground {
         Scaffold(
+            containerColor = Color.Transparent,
             bottomBar = {
-                if (onTopLevel) NavigationBar {
+                if (onTopLevel) NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.drawBehind {
+                        drawLine(barLine, Offset(0f, 0f), Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
+                    },
+                ) {
                     TopLevelDestination.entries.forEach { tab ->
                         NavigationBarItem(
                             selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true,
@@ -125,7 +141,14 @@ fun Track14App(
                                 }
                             },
                             icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(stringResource(tab.label)) },
+                            label = { Text(stringResource(tab.label), style = MaterialTheme.typography.labelSmall) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                indicatorColor = Color.Transparent,
+                            ),
                         )
                     }
                 }
@@ -261,6 +284,7 @@ fun Track14App(
                 }
                 composable(SHOP_ROUTE) { ShopRoute(onBack = { navController.popBackStack() }) }
             }
+        }
         }
     }
 }

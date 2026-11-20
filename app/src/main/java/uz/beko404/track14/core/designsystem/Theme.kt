@@ -5,12 +5,15 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 private val LightColors = lightColorScheme(
     primary = Track14Colors.Blue600,
@@ -42,6 +45,15 @@ private val DarkColors = darkColorScheme(
     error = Color(0xFFF87171),
 )
 
+/** Corner radii from the canvas: chips 12, fields 14, buttons 16, cards 18–22, sheets 28. */
+private val Track14Shapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+)
+
 @Composable
 fun Track14Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -62,6 +74,8 @@ fun Track14Theme(
     }
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = Track14Typography,
+        shapes = Track14Shapes,
         content = content,
     )
 }
