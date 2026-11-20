@@ -215,6 +215,13 @@ fun Track14App(
                         onFeedback = { id -> navController.navigate("$FEEDBACK_ROUTE/$id") },
                         onOpenTest = { id -> navController.navigate("$TEST_DETAIL_ROUTE/$id") },
                         onOpenWallet = { navController.navigate(WALLET_ROUTE) },
+                        onBrowse = {
+                            navController.navigate(TopLevelDestination.Apps.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                     )
                 }
                 composable(

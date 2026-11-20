@@ -571,4 +571,21 @@
     <string name="support_check_update">Проверить обновления</string>
     <string name="published_on">вышло %1$s</string>
     <string name="tab_my_apps_short">Мои</string>
+    <string name="apps_error_desc">Проверьте интернет и откройте снова чуть позже.</string>
+    <string name="apps_empty_desc">Новые приложения для теста появятся здесь.</string>
+    <string name="apps_no_results_desc">Попробуйте другое слово или категорию.</string>
+    <string name="mytests_empty_title">Пока нет тестов</string>
+    <string name="mytests_empty_action">Смотреть приложения</string>
+    <string name="myapps_empty_title">Вы ещё не добавили приложение</string>
+    <string name="myapps_empty_action">Добавить приложение</string>
+    <string name="notifications_empty_desc">Здесь появятся новые тестеры, напоминания и итоги тестов.</string>
+    <string name="wallet_empty_desc">Здесь будут видны заработанные и потраченные Coin14.</string>
+    <string name="shop_unavailable_title">Магазин сейчас недоступен</string>
+    <string name="published_empty_title">Пока нет вышедших приложений</string>
+    <string name="dashboard_no_testers_title">Ждём тестеров</string>
+    <string name="dash_filter_empty">В этом фильтре пусто</string>
+    <string name="dash_filter_empty_desc">Выберите другой фильтр или «Все».</string>
+    <string name="fb_empty_title">Пока нет отзывов</string>
+    <string name="fb_filter_empty_desc">Нет отзывов с этим тегом. Выберите другой.</string>
+    <string name="testdetail_history_empty_desc">Итог каждого дня появится здесь, когда он закончится.</string>
 </resources>

@@ -1,5 +1,6 @@
 package uz.beko404.track14.feature.mytests
 
+import uz.beko404.track14.core.designsystem.EmptyState
 import uz.beko404.track14.feature.common.HeaderBalancePill
 import uz.beko404.track14.domain.model.DayStatus
 import uz.beko404.track14.core.designsystem.accentFor
@@ -85,6 +86,7 @@ fun MyTestsRoute(
     onFeedback: (String) -> Unit,
     onOpenTest: (String) -> Unit = {},
     onOpenWallet: () -> Unit = {},
+    onBrowse: () -> Unit = {},
     viewModel: MyTestsViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
 ) {
@@ -141,6 +143,7 @@ fun MyTestsRoute(
             onLeave = { leaving = it },
             onFeedback = { onFeedback(it.id) },
             onOpenTest = { onOpenTest(it.id) },
+            onBrowse = onBrowse,
             header = { HeaderBalancePill(onWallet = onOpenWallet, onSignIn = { authViewModel.signIn { tokenClient.getIdToken() } }) },
         )
         SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
@@ -172,6 +175,7 @@ fun MyTestsScreen(
     onFeedback: (TesterTest) -> Unit,
     onOpenTest: (TesterTest) -> Unit = {},
     signInError: DomainError? = null,
+    onBrowse: () -> Unit = {},
     header: @Composable () -> Unit = {},
 ) {
     when (state) {
@@ -193,7 +197,7 @@ fun MyTestsScreen(
             LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 20.dp)) {
                 item { ScreenTitle(stringResource(R.string.tab_my_tests)) { header() } }
                 if (state.active.isEmpty() && state.finished.isEmpty()) {
-                    item { EmptyCard() }
+                    item { EmptyCard(onBrowse) }
                 }
                 if (todayTests.isNotEmpty()) {
                     item { TodayCard(todayTests, state.nowMillis) }
@@ -415,10 +419,11 @@ private fun SignedOutCard(isSigningIn: Boolean, error: DomainError?, onSignIn: (
 }
 
 @Composable
-private fun EmptyCard() {
-    T14Card(Modifier.padding(20.dp)) {
-        Text(stringResource(R.string.mytests_empty), style = MaterialTheme.typography.bodyMedium, color = T14Theme.colors.textBody)
-    }
+private fun EmptyCard(onBrowse: () -> Unit) {
+    EmptyState(
+        T14Paths.Tests, stringResource(R.string.mytests_empty_title), stringResource(R.string.mytests_empty), Modifier.padding(20.dp),
+        action = stringResource(R.string.mytests_empty_action), onAction = onBrowse,
+    )
 }
 
 /** 48dp outline button with a dashed border, as for "Tugagan testlar". */

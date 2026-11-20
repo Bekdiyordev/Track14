@@ -1,5 +1,7 @@
 package uz.beko404.track14.feature.testdetail
 
+import uz.beko404.track14.core.designsystem.EmptyIcons
+import uz.beko404.track14.core.designsystem.EmptyState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -154,7 +156,7 @@ fun TestDetailRoute(
                     ListCard(stringResource(R.string.testdetail_history), Modifier.padding(top = 12.dp)) {
                         val history = DayHistory.closed(records)
                         if (history.isEmpty()) {
-                            Text(stringResource(R.string.testdetail_history_empty), fontSize = 13.sp, color = c.textSecondary, modifier = Modifier.padding(bottom = 12.dp))
+                            EmptyState(EmptyIcons.Clock, stringResource(R.string.testdetail_history_empty), stringResource(R.string.testdetail_history_empty_desc), Modifier.padding(bottom = 10.dp), card = false, compact = true)
                         }
                         history.forEach { r ->
                             HistoryRow(r, DayHistory.dateOf(test.startedAtMillis, r.day, test.timezone), isToday = r.day == today, showMode = true)
@@ -264,7 +266,7 @@ fun TesterDetailRoute(
                 ListCard(stringResource(R.string.testerdetail_recent), Modifier.padding(top = 12.dp), radius = 20.dp, titleSize = 16) {
                     val history = DayHistory.closed(records).take(7)
                     if (history.isEmpty()) {
-                        Text(stringResource(R.string.testdetail_history_empty), fontSize = 13.sp, color = c.textSecondary, modifier = Modifier.padding(bottom = 12.dp))
+                        EmptyState(EmptyIcons.Clock, stringResource(R.string.testdetail_history_empty), stringResource(R.string.testdetail_history_empty_desc), Modifier.padding(bottom = 10.dp), card = false, compact = true)
                     }
                     history.forEach { r -> HistoryRow(r, DayHistory.dateOf(tester.startedAtMillis, r.day, tester.timezone), isToday = false, showMode = false) }
                 }

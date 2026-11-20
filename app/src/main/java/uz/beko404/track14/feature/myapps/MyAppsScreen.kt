@@ -1,5 +1,6 @@
 package uz.beko404.track14.feature.myapps
 
+import uz.beko404.track14.core.designsystem.EmptyState
 import uz.beko404.track14.feature.common.HeaderBalancePill
 import uz.beko404.track14.core.designsystem.Track14Colors
 import uz.beko404.track14.core.designsystem.T14Theme
@@ -105,9 +106,10 @@ fun MyAppsRoute(
             }
             if (s.apps.isEmpty()) {
                 item {
-                    T14Card(Modifier.padding(horizontal = 20.dp)) {
-                        Text(stringResource(R.string.myapps_empty), style = MaterialTheme.typography.bodyMedium, color = T14Theme.colors.textBody)
-                    }
+                    EmptyState(
+                        T14Paths.MyApps, stringResource(R.string.myapps_empty_title), stringResource(R.string.myapps_empty), Modifier.padding(horizontal = 20.dp),
+                        action = stringResource(R.string.myapps_empty_action), onAction = onAddApp,
+                    )
                 }
             }
             items(s.apps, key = { it.id }) { app ->

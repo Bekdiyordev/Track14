@@ -2,6 +2,8 @@
 
 package uz.beko404.track14.feature.myapps
 
+import uz.beko404.track14.core.designsystem.EmptyIcons
+import uz.beko404.track14.core.designsystem.EmptyState
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -763,7 +765,11 @@ fun DashboardRoute(
                                 FilterPill(stringResource(R.string.dash_filter_broken, counts[TodayState.BROKEN] ?: 0), filter == TesterFilter.BROKEN) { filter = TesterFilter.BROKEN }
                             }
                             if (shown.isEmpty()) {
-                                Text(stringResource(R.string.dashboard_no_testers), fontSize = 13.sp, lineHeight = 19.sp, color = c.textSecondary)
+                                if (state.testers.isEmpty()) {
+                                    EmptyState(T14Paths.Users, stringResource(R.string.dashboard_no_testers_title), stringResource(R.string.dashboard_no_testers), card = false, compact = true)
+                                } else {
+                                    EmptyState(T14Paths.Search, stringResource(R.string.dash_filter_empty), stringResource(R.string.dash_filter_empty_desc), card = false, compact = true)
+                                }
                             }
                             shown.forEach { t -> TesterRow(t, now, onClick = { onOpenTester(t.testId) }) }
                         }
@@ -1122,7 +1128,13 @@ fun FeedbackListRoute(onBack: () -> Unit, viewModel: DashboardViewModel = hiltVi
                 }
             }
             if (shown.isEmpty()) {
-                item { Text(stringResource(R.string.fb_empty), fontSize = 14.sp, lineHeight = 20.sp, color = c.textSecondary, modifier = Modifier.padding(top = 8.dp)) }
+                item {
+                    if (all.isEmpty()) {
+                        EmptyState(EmptyIcons.Message, stringResource(R.string.fb_empty_title), stringResource(R.string.fb_empty), Modifier.padding(top = 4.dp))
+                    } else {
+                        EmptyState(T14Paths.Search, stringResource(R.string.dash_filter_empty), stringResource(R.string.fb_filter_empty_desc), Modifier.padding(top = 4.dp))
+                    }
+                }
             }
             items(shown, key = { it.id }) { f -> FeedbackCard(f, testers[f.testId]) }
         }

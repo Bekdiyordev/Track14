@@ -2,6 +2,8 @@
 
 package uz.beko404.track14.feature.social
 
+import uz.beko404.track14.core.designsystem.T14Paths
+import uz.beko404.track14.core.designsystem.EmptyState
 import uz.beko404.track14.core.designsystem.T14Theme
 import uz.beko404.track14.core.designsystem.T14Icon
 import uz.beko404.track14.core.designsystem.T14Card
@@ -377,9 +379,7 @@ fun NotificationsRoute(onBack: () -> Unit, viewModel: NotificationsViewModel = h
         val list = items
         when {
             list == null -> SkeletonList(count = 4, modifier = Modifier.padding(20.dp))
-            list.isEmpty() -> T14Card(Modifier.padding(20.dp)) {
-                Text(stringResource(R.string.notifications_empty), color = c.textBody, fontSize = 15.sp)
-            }
+            list.isEmpty() -> EmptyState(T14Paths.Bell, stringResource(R.string.notifications_empty), stringResource(R.string.notifications_empty_desc), Modifier.padding(20.dp))
             else -> {
                 val todayLabel = stringResource(R.string.day_today_caps)
                 val yesterdayLabel = stringResource(R.string.day_yesterday_caps)

@@ -24,7 +24,7 @@
     <string name="apps_featured">Topdagilar</string>
     <string name="apps_waiting">Tester kutayotganlar</string>
     <string name="apps_count">%1$d ta ilova</string>
-    <string name="apps_empty">Hozircha ilovalar yo\'q</string>
+    <string name="apps_empty">Hozircha ilova yo\'q</string>
     <string name="apps_no_results">Hech narsa topilmadi</string>
     <string name="apps_error">Ilovalarni yuklab bo\'lmadi</string>
     <string name="reward_per_day">+%1$d / kun</string>
@@ -62,7 +62,7 @@
     <string name="join_step_usage_action">Ruxsat berish</string>
     <string name="join_step_again">Qayta ochish</string>
     <string name="mytests_signed_out">Testlaringizni ko\'rish uchun kiring</string>
-    <string name="mytests_empty">Hali test yo\'q. Ilovalar bo\'limidan birini tanlang.</string>
+    <string name="mytests_empty">Ilovalar bo\'limidan birini tanlab, 14 kunlik testni boshlang va har kuni Coin14 oling.</string>
     <string name="mytests_today">Bugungi vazifalar</string>
     <string name="mytests_usage_hint">Ishlatish ruxsati yo\'q: ilovani shu yerdan oching va 30 soniyadan keyin qayting.</string>
     <string name="mytests_finished">Yakunlanganlar</string>
@@ -95,7 +95,7 @@
     <string name="status_removed">O\'chirilgan</string>
     <string name="myapps_signed_out">Ilovangizni joylash uchun kiring</string>
     <string name="myapps_add">Ilova qo\'shish</string>
-    <string name="myapps_empty">Hali ilova yo\'q. Birinchisini qo\'shing: 12 tester 14 kun davomida test qiladi.</string>
+    <string name="myapps_empty">Ilovangizni qo\'shing — 12+ tester uni 14 kun test qiladi va siz production\'ga chiqasiz.</string>
     <string name="myapps_draft_hint">Play Console sozlamasi qolgan</string>
     <string name="myapps_stats">%1$d / %2$d tester · %3$d tasi 14 kunni yakunladi</string>
     <string name="add_title">Ilova qo\'shish</string>
@@ -129,7 +129,7 @@
     <string name="dashboard_publish_title">Ilova production\'ga chiqdimi?</string>
     <string name="dashboard_publish_body">Ilova katalogdan olinadi va \"Chiqqan ilovalar\"ga qo\'shiladi. Boshlangan testlar oxirigacha davom etadi.</string>
     <string name="dashboard_tester_list">Testerlar</string>
-    <string name="dashboard_no_testers">Hali tester yo\'q. Ilovangiz katalogda ko\'rinib turibdi.</string>
+    <string name="dashboard_no_testers">Ilovangiz ro\'yxatda ko\'rinib turibdi. Testerlar qo\'shilishi bilan shu yerda chiqadi.</string>
     <string name="dashboard_tester_n">Tester %1$d</string>
     <string name="dashboard_days_passed">%1$d / 14 kun</string>
     <string name="error_insufficient_balance">Balans yetarli emas. Coin14 ni boshqalarni test qilib ishlang.</string>
@@ -192,7 +192,7 @@
     <string name="reason_fake_activity">Soxta faollik (aslida ishlatmaydi)</string>
     <string name="reason_other">Boshqa</string>
     <string name="notifications_title">Bildirishnomalar</string>
-    <string name="notifications_empty">Hozircha xabar yo\'q</string>
+    <string name="notifications_empty">Bildirishnoma yo\'q</string>
     <string name="dashboard_feedback">Fikrlar (%1$d)</string>
     <string name="tx_adjustment">Admin tuzatishi</string>
     <string name="error_maintenance">Texnik ishlar olib borilmoqda. Birozdan keyin urinib ko\'ring.</string>
@@ -267,7 +267,7 @@
     <string name="published_title">Track14 orqali chiqqanlar</string>
     <string name="published_count">chiqqan ilova</string>
     <string name="published_testers">tester ishtirok etdi</string>
-    <string name="published_empty">Hali chiqqan ilova yo\'q. Birinchisi siznikimi?</string>
+    <string name="published_empty">Track14 orqali Play\'ga chiqqan birinchi ilova sizniki bo\'lishi mumkin.</string>
     <string name="published_stat_testers">tester</string>
     <string name="published_stat_completed">14 kun yakunladi</string>
     <string name="published_stat_feedback">fikr</string>
@@ -488,7 +488,7 @@
     <string name="dash_waiting_testers">Testerlar kutilmoqda</string>
     <string name="fb_all">Hammasi</string>
     <string name="fb_count">%1$d ta fikr</string>
-    <string name="fb_empty">Hali fikr yo\'q. Testerlar test davomida fikr qoldirishi mumkin.</string>
+    <string name="fb_empty">Testerlar test davomida fikr qoldirganda shu yerda ko\'rasiz.</string>
     <string name="fb_filter_bug">Xatolar</string>
     <string name="fb_filter_design">Dizayn</string>
     <string name="fb_filter_idea">Takliflar</string>
@@ -577,4 +577,21 @@
     <string name="support_check_update">Yangilanishni tekshirish</string>
     <string name="published_on">%1$s chiqqan</string>
     <string name="tab_my_apps_short">Ilovalarim</string>
+    <string name="apps_error_desc">Internet aloqasini tekshirib, birozdan keyin qayta oching.</string>
+    <string name="apps_empty_desc">Yangi ilovalar test uchun qo\'shilganda shu yerda chiqadi.</string>
+    <string name="apps_no_results_desc">Boshqa so\'z yoki kategoriya bilan qidirib ko\'ring.</string>
+    <string name="mytests_empty_title">Hali testlaringiz yo\'q</string>
+    <string name="mytests_empty_action">Ilovalarni ko\'rish</string>
+    <string name="myapps_empty_title">Hali ilova qo\'shmagansiz</string>
+    <string name="myapps_empty_action">Ilova qo\'shish</string>
+    <string name="notifications_empty_desc">Yangi tester, kunlik eslatma va test natijalari shu yerda chiqadi.</string>
+    <string name="wallet_empty_desc">Coin14 ishlaganingiz va sarflaganingiz shu yerda ko\'rinadi.</string>
+    <string name="shop_unavailable_title">Do\'kon hozir ishlamayapti</string>
+    <string name="published_empty_title">Hali chiqqan ilova yo\'q</string>
+    <string name="dashboard_no_testers_title">Testerlar kutilmoqda</string>
+    <string name="dash_filter_empty">Bu filtrda hech kim yo\'q</string>
+    <string name="dash_filter_empty_desc">Boshqa filtrni tanlang yoki \"Hammasi\"ni bosing.</string>
+    <string name="fb_empty_title">Hali fikr yo\'q</string>
+    <string name="fb_filter_empty_desc">Bu teg bilan fikr yo\'q. Boshqa tegni tanlang.</string>
+    <string name="testdetail_history_empty_desc">Har kun tugagach natijasi shu yerda chiqadi.</string>
 </resources>

@@ -1,5 +1,8 @@
 package uz.beko404.track14.feature.wallet
 
+import uz.beko404.track14.core.designsystem.EmptyTone
+import uz.beko404.track14.core.designsystem.EmptyIcons
+import uz.beko404.track14.core.designsystem.EmptyState
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -105,7 +108,7 @@ fun WalletRoute(onBack: () -> Unit, onBuy: () -> Unit, viewModel: WalletViewMode
             item {
                 T14Card(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp), padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), spacing = 0.dp) {
                     if (state.shown.isEmpty()) {
-                        Text(stringResource(R.string.wallet_empty), fontSize = 14.sp, color = c.textSecondary, modifier = Modifier.padding(vertical = 16.dp))
+                        EmptyState(T14Paths.Wallet, stringResource(R.string.wallet_empty), stringResource(R.string.wallet_empty_desc), Modifier.padding(vertical = 8.dp), card = false)
                     }
                     var last = ""
                     state.shown.forEach { tx ->
@@ -284,9 +287,10 @@ fun ShopRoute(onBack: () -> Unit, viewModel: ShopViewModel = hiltViewModel()) {
             when {
                 state.loading -> item { SkeletonList(count = 4, modifier = Modifier.padding(20.dp)) }
                 state.offers.isEmpty() -> item {
-                    T14Card(Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp)) {
-                        Text(stringResource(R.string.shop_unavailable), fontSize = 15.sp, lineHeight = 22.sp, color = c.textBody)
-                    }
+                    EmptyState(
+                        EmptyIcons.Cart, stringResource(R.string.shop_unavailable_title), stringResource(R.string.shop_unavailable),
+                        Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp), tone = EmptyTone.ERROR,
+                    )
                 }
                 else -> {
                     item { Spacer(Modifier.height(14.dp)) }

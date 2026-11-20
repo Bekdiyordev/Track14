@@ -1,5 +1,8 @@
 package uz.beko404.track14.feature.apps
 
+import uz.beko404.track14.core.designsystem.EmptyTone
+import uz.beko404.track14.core.designsystem.EmptyIcons
+import uz.beko404.track14.core.designsystem.EmptyState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -107,8 +110,8 @@ fun AppsScreen(
         item { FilterChips(state.categories, filter, onCategorySelected, onSortSelected) }
         when {
             state.isLoading -> item { SkeletonList(count = 5, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
-            state.error != null -> item { CenteredMessage(stringResource(R.string.apps_error)) }
-            state.totalCount == 0 -> item { CenteredMessage(stringResource(R.string.apps_empty)) }
+            state.error != null -> item { EmptyState(EmptyIcons.Cloud, stringResource(R.string.apps_error), stringResource(R.string.apps_error_desc), Modifier.padding(20.dp), tone = EmptyTone.ERROR) }
+            state.totalCount == 0 -> item { EmptyState(T14Paths.Apps, stringResource(R.string.apps_empty), stringResource(R.string.apps_empty_desc), Modifier.padding(20.dp)) }
             else -> {
                 if (state.featured.isNotEmpty() && filter.isBrowsing) {
                     item { SectionTitle(stringResource(R.string.apps_featured), top = 8.dp) }
@@ -138,7 +141,7 @@ fun AppsScreen(
                     )
                 }
                 if (state.apps.isEmpty()) {
-                    item { CenteredMessage(stringResource(R.string.apps_no_results)) }
+                    item { EmptyState(T14Paths.Search, stringResource(R.string.apps_no_results), stringResource(R.string.apps_no_results_desc), Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) }
                 } else {
                     items(state.apps, key = { it.id }) { app ->
                         AppRow(

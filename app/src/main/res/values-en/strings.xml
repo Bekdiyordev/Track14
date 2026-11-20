@@ -571,4 +571,21 @@
     <string name="support_check_update">Check for updates</string>
     <string name="published_on">shipped %1$s</string>
     <string name="tab_my_apps_short">My apps</string>
+    <string name="apps_error_desc">Check your connection and try again in a moment.</string>
+    <string name="apps_empty_desc">New apps to test will show up here.</string>
+    <string name="apps_no_results_desc">Try another word or category.</string>
+    <string name="mytests_empty_title">No tests yet</string>
+    <string name="mytests_empty_action">Browse apps</string>
+    <string name="myapps_empty_title">You haven\'t added an app yet</string>
+    <string name="myapps_empty_action">Add an app</string>
+    <string name="notifications_empty_desc">New testers, reminders and test results will show up here.</string>
+    <string name="wallet_empty_desc">Coin14 you earn and spend will show up here.</string>
+    <string name="shop_unavailable_title">The shop is unavailable</string>
+    <string name="published_empty_title">No shipped apps yet</string>
+    <string name="dashboard_no_testers_title">Waiting for testers</string>
+    <string name="dash_filter_empty">Nothing in this filter</string>
+    <string name="dash_filter_empty_desc">Pick another filter or \"All\".</string>
+    <string name="fb_empty_title">No feedback yet</string>
+    <string name="fb_filter_empty_desc">No feedback with this tag. Pick another.</string>
+    <string name="testdetail_history_empty_desc">Each day's result shows up here once it ends.</string>
 </resources>

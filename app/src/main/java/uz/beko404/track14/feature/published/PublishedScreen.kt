@@ -1,5 +1,6 @@
 package uz.beko404.track14.feature.published
 
+import uz.beko404.track14.core.designsystem.EmptyState
 import androidx.compose.foundation.layout.Spacer
 import uz.beko404.track14.core.designsystem.T14Card
 import uz.beko404.track14.core.designsystem.BackButton
@@ -97,7 +98,7 @@ fun PublishedRoute(onBack: () -> Unit, viewModel: PublishedViewModel = hiltViewM
             when {
                 list == null -> item { SkeletonList(count = 4) }
                 list.isEmpty() -> item {
-                    T14Card { Text(stringResource(R.string.published_empty), color = c.textBody, fontSize = 15.sp, lineHeight = 22.sp) }
+                    EmptyState(T14Paths.Star, stringResource(R.string.published_empty_title), stringResource(R.string.published_empty))
                 }
                 else -> items(list, key = { it.id }) { app ->
                     PublishedCard(app, onOpenStore = { ExternalLinks.openStorePage(context, app.packageName) }, modifier = Modifier.animateItem())
