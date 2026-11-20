@@ -45,6 +45,8 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import uz.beko404.track14.core.designsystem.Track14Theme
@@ -226,9 +228,10 @@ fun Track14App(
                         onFeedback = { id -> navController.navigate("$FEEDBACK_ROUTE/$id") },
                     )
                 }
-                composable(
+                dialog(
                     route = "$FEEDBACK_ROUTE/{${FeedbackViewModel.ARG_TEST_ID}}",
                     arguments = listOf(navArgument(FeedbackViewModel.ARG_TEST_ID) { type = NavType.StringType }),
+                    dialogProperties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
                 ) { FeedbackRoute(onDone = { navController.popBackStack() }) }
                 composable(
                     route = "$REPORT_ROUTE/{${ReportViewModel.ARG_TARGET_TYPE}}/{${ReportViewModel.ARG_TARGET_ID}}",

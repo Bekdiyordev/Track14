@@ -120,12 +120,19 @@ class ReportViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val auth: AuthRepository,
     private val reports: ReportRepository,
+    apps: uz.beko404.track14.domain.repository.AppsRepository,
 ) : ViewModel() {
     private val targetId: String? = savedStateHandle.get<String>(ARG_TARGET_ID)?.takeIf { TEST_ID.matches(it) }
     private val _state = MutableStateFlow(
         ReportUiState(target = ReportTarget.entries.firstOrNull { it.wireName == savedStateHandle.get<String>(ARG_TARGET_TYPE) }),
     )
     val state: StateFlow<ReportUiState> = _state.asStateFlow()
+
+    /** The reported app for the card at the top (null for tester reports or unknown apps). */
+    val app: StateFlow<uz.beko404.track14.domain.repository.CatalogApp?> =
+        (if (_state.value.target == ReportTarget.APP && targetId != null) apps.observeApp(targetId) else flowOf(null))
+            .map { (it as? DomainResult.Success)?.value }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun pick(reason: ReportReason) = _state.update { it.copy(reason = reason) }
     fun setComment(c: String) = _state.update { it.copy(comment = c.take(1_000)) }
@@ -165,6 +172,15 @@ class NotificationsViewModel @Inject constructor(
     val items: StateFlow<List<AppNotification>?> = auth.session.flatMapLatest { s ->
         if (s is Session.SignedIn) notifications.observe(s.uid).map { (it as? DomainResult.Success)?.value.orEmpty() } else flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun readAll() {
+        val unread = items.value.orEmpty().filterNot { it.read }
+        if (unread.isEmpty()) return
+        viewModelScope.launch {
+            val session = auth.session.first() as? Session.SignedIn ?: return@launch
+            unread.forEach { notifications.markRead(session.uid, it.id) }
+        }
+    }
 
     fun open(n: AppNotification) {
         if (n.read) return
