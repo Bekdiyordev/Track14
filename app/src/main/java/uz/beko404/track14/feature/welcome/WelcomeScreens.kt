@@ -60,7 +60,10 @@ fun LanguageScreen(
     val c = T14Theme.colors
     ScreenBackground {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Box(Modifier.fillMaxWidth().weight(1f)) {
+            BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                // The bottom card grows with the theme picker, so the hero must fit whatever height is left.
+                val full = maxHeight >= 300.dp
+                val compact = !full && maxHeight >= 190.dp
                 // Theme toggle: moon in light mode, sun in dark mode.
                 val label = stringResource(if (darkTheme) R.string.theme_to_light else R.string.theme_to_dark)
                 Box(
@@ -75,13 +78,18 @@ fun LanguageScreen(
                     )
                 }
                 Column(
-                    Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, top = 40.dp, bottom = 24.dp),
+                    Modifier.fillMaxSize().padding(
+                        start = 24.dp, end = 24.dp,
+                        top = if (full) 40.dp else 12.dp, bottom = if (full) 24.dp else 12.dp,
+                    ),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(if (full) 16.dp else 8.dp, Alignment.CenterVertically),
                 ) {
-                    Track14Logo(112.dp)
-                    Track14Wordmark(44)
-                    Text(stringResource(R.string.brand_tagline), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.textBody)
+                    Track14Logo(if (full) 112.dp else if (compact) 76.dp else 56.dp)
+                    Track14Wordmark(if (full) 44 else if (compact) 32 else 26)
+                    if (full || compact) {
+                        Text(stringResource(R.string.brand_tagline), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.textBody)
+                    }
                 }
             }
             Column(
