@@ -517,4 +517,15 @@
     <string name="signin_body">Чтобы начать тест, нужен аккаунт Google. Opt-in делается именно с ним.</string>
     <string name="signin_same_account">Выберите тот же аккаунт, что и в Play Store на телефоне, иначе тест не засчитается.</string>
     <string name="signin_consent">Входя, вы соглашаетесь с политикой конфиденциальности.</string>
+    <string name="wallet_month_spent">Потрачено за месяц</string>
+    <string name="wallet_month_earned">Заработано за месяц</string>
+    <string name="shop_fees">Размещение: Стандарт %1$s, Pro %2$s Coin14</string>
+    <string name="shop_fees_rest"> — оплачивается один раз. Coin14 можно и заработать, тестируя чужие приложения.</string>
+    <string name="shop_after">Баланс после</string>
+    <string name="shop_after_value">%1$s Coin14</string>
+    <string name="pack_note_500">Топ на 3 дня + остаток</string>
+    <string name="pack_note_1000">1 размещение Стандарт</string>
+    <string name="pack_note_2000">1 размещение Pro + остаток</string>
+    <string name="pack_note_5000">Pro + 7 дней в топе + остаток</string>
+    <string name="pack_note_10000">Для нескольких приложений</string>
 </resources>

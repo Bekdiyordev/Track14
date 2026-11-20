@@ -523,4 +523,15 @@
     <string name="signin_body">Testni boshlash uchun Google akkauntingiz kerak. Opt-in aynan shu akkaunt bilan qilinadi.</string>
     <string name="signin_same_account">Telefoningizdagi Play Store akkaunti bilan bir xil akkauntni tanlang, aks holda test hisoblanmaydi.</string>
     <string name="signin_consent">Kirish orqali maxfiylik siyosatiga rozilik bildirasiz.</string>
+    <string name="wallet_month_spent">Shu oy sarflangan</string>
+    <string name="wallet_month_earned">Shu oy ishlangan</string>
+    <string name="shop_fees">Ilova joylash: Standart %1$s, Pro %2$s Coin14</string>
+    <string name="shop_fees_rest"> — bir marta to\'lanadi. Coin14 ni boshqalarni test qilib ham ishlashingiz mumkin.</string>
+    <string name="shop_after">Balansdan keyin</string>
+    <string name="shop_after_value">%1$s Coin14</string>
+    <string name="pack_note_500">Top 3 kun + qoldiq</string>
+    <string name="pack_note_1000">1 ta Standart joylash</string>
+    <string name="pack_note_2000">1 ta Pro joylash + qoldiq</string>
+    <string name="pack_note_5000">Pro + 7 kunlik top + qoldiq</string>
+    <string name="pack_note_10000">Bir nechta ilova uchun</string>
 </resources>

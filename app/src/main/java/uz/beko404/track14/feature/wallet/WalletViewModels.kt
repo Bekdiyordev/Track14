@@ -80,6 +80,7 @@ data class ShopUiState(
     val balance: Coins? = null,
     val launching: Boolean = false,
     val outcome: PurchaseOutcome? = null,
+    val economy: uz.beko404.track14.domain.model.EconomyConfig = uz.beko404.track14.domain.model.EconomyConfig(),
 ) {
     val selectedOffer: PackOffer? get() = offers.firstOrNull { it.pack.productId == selected }
 }
@@ -91,6 +92,7 @@ class ShopViewModel @Inject constructor(
     wallet: WalletRepository,
     private val billing: BillingManager,
     verifier: PurchaseVerifier,
+    economy: uz.beko404.track14.domain.repository.EconomyRepository,
 ) : ViewModel() {
     private val local = MutableStateFlow(ShopUiState())
 
@@ -98,7 +100,7 @@ class ShopViewModel @Inject constructor(
         if (s is Session.SignedIn) wallet.observeBalance(s.uid).map { (it as? DomainResult.Success)?.value } else flowOf(null)
     }
 
-    val state: StateFlow<ShopUiState> = combine(local, balance) { l, b -> l.copy(balance = b) }
+    val state: StateFlow<ShopUiState> = combine(local, balance, economy.observe()) { l, b, e -> l.copy(balance = b, economy = e) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShopUiState())
 
     init {

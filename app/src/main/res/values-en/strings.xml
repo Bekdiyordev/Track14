@@ -517,4 +517,15 @@
     <string name="signin_body">You need a Google account to start a test. The opt-in is done with this same account.</string>
     <string name="signin_same_account">Pick the same account as your phone\'s Play Store, otherwise the test won\'t count.</string>
     <string name="signin_consent">By signing in you agree to the privacy policy.</string>
+    <string name="wallet_month_spent">Spent this month</string>
+    <string name="wallet_month_earned">Earned this month</string>
+    <string name="shop_fees">Listing: Standard %1$s, Pro %2$s Coin14</string>
+    <string name="shop_fees_rest"> — paid once. You can also earn Coin14 by testing other apps.</string>
+    <string name="shop_after">Balance after</string>
+    <string name="shop_after_value">%1$s Coin14</string>
+    <string name="pack_note_500">3 days on top + change</string>
+    <string name="pack_note_1000">1 Standard listing</string>
+    <string name="pack_note_2000">1 Pro listing + change</string>
+    <string name="pack_note_5000">Pro + 7 days on top + change</string>
+    <string name="pack_note_10000">For several apps</string>
 </resources>
