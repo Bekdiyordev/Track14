@@ -24,7 +24,36 @@ class ProfileViewModel @Inject constructor(
     auth: AuthRepository,
     wallet: WalletRepository,
     profiles: ProfileRepository,
+    owner: uz.beko404.track14.domain.repository.OwnerRepository,
+    notifications: uz.beko404.track14.domain.repository.NotificationsRepository,
+    config: uz.beko404.track14.domain.repository.ConfigRepository,
 ) : ViewModel() {
+
+    /** Profile counters beside TesterStats: coins earned in total, own apps, unread messages. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val extras: StateFlow<ProfileExtras> = auth.session
+        .flatMapLatest { s ->
+            if (s !is Session.SignedIn) {
+                flowOf(ProfileExtras())
+            } else {
+                kotlinx.coroutines.flow.combine(
+                    wallet.observeTransactions(s.uid),
+                    owner.observeMyApps(s.uid),
+                    notifications.observe(s.uid),
+                ) { tx, apps, inbox ->
+                    ProfileExtras(
+                        earnedTotal = (tx as? DomainResult.Success)?.value.orEmpty()
+                            .filter { it.type in EARNING_TYPES && it.amount.value > 0 }.sumOf { it.amount.value },
+                        appsCount = (apps as? DomainResult.Success)?.value?.size ?: 0,
+                        unread = (inbox as? DomainResult.Success)?.value?.count { !it.read } ?: 0,
+                    )
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileExtras())
+
+    val telegram: StateFlow<String?> = config.support().map { it.safeTelegram }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val stats: StateFlow<TesterStats> = auth.session
@@ -44,3 +73,13 @@ class ProfileViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
+
+data class ProfileExtras(val earnedTotal: Long = 0, val appsCount: Int = 0, val unread: Int = 0)
+
+/** Coins the user earned by testing (not bought, not refunds or admin corrections). */
+private val EARNING_TYPES = setOf(
+    uz.beko404.track14.domain.model.TxType.EARN_DAY,
+    uz.beko404.track14.domain.model.TxType.BONUS,
+    uz.beko404.track14.domain.model.TxType.FEEDBACK,
+    uz.beko404.track14.domain.model.TxType.WELCOME,
+)

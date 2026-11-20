@@ -37,12 +37,12 @@ fun StatusPill(status: AppStatus, modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(RoundedCornerShape(999.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(999.dp))
+            .border(1.dp, T14Theme.colors.fieldBorder, RoundedCornerShape(999.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(dot))
-        Text(stringResource(label), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        Text(stringResource(label), style = MaterialTheme.typography.labelMedium.copy(fontSize = androidx.compose.ui.unit.TextUnit(12f, androidx.compose.ui.unit.TextUnitType.Sp)), fontWeight = FontWeight.Bold)
     }
 }

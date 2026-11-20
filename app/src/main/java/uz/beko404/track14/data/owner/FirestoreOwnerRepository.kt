@@ -149,6 +149,8 @@ internal fun ownerAppFrom(id: String, data: Map<String, Any?>, campaign: Map<Str
         optInUrl = data["optInUrl"] as? String ?: "",
         status = status,
         campaign = campaign?.let(::campaignSummaryFrom),
+        suspendedReason = (data["suspendedReason"] as? String).orEmpty().take(300),
+        updatedAtMillis = data["updatedAt"].toMillis(),
     )
 }
 

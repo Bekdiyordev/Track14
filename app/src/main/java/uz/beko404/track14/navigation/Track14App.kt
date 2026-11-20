@@ -245,6 +245,8 @@ fun Track14App(
                         onAddApp = { navController.navigate(ADD_APP_ROUTE) },
                         onOpenDraft = { id -> if (AppIds.isValid(id)) navController.navigate("$PLAN_ROUTE/$id") },
                         onOpenDashboard = { id -> if (AppIds.isValid(id)) navController.navigate("$DASHBOARD_ROUTE/$id") },
+                        onOpenWallet = { navController.navigate(WALLET_ROUTE) },
+                        onAppeal = { navController.navigate(SUPPORT_ROUTE) },
                     )
                 }
                 composable(ADD_APP_ROUTE) {
@@ -294,6 +296,14 @@ fun Track14App(
                         onOpenNotifications = { navController.navigate(NOTIFICATIONS_ROUTE) },
                         onOpenSupport = { navController.navigate(SUPPORT_ROUTE) },
                         onOpenSettings = { navController.navigate(SETTINGS_ROUTE) },
+                        onOpenPublished = { navController.navigate(PUBLISHED_ROUTE) },
+                        onOpenMyApps = {
+                            navController.navigate(TopLevelDestination.MyApps.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                     )
                 }
                 composable(WALLET_ROUTE) {

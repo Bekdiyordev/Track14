@@ -92,9 +92,9 @@
     <string name="status_suspended">Suspended</string>
     <string name="status_removed">Removed</string>
     <string name="myapps_signed_out">Sign in to list your app</string>
-    <string name="myapps_add">Add</string>
+    <string name="myapps_add">Add an app</string>
     <string name="myapps_empty">No apps yet. Add your first one: 12 testers will test it for 14 days.</string>
-    <string name="myapps_draft_hint">Choose a plan and start the test</string>
+    <string name="myapps_draft_hint">Play Console setup left</string>
     <string name="myapps_stats">%1$d / %2$d testers · %3$d finished 14 days</string>
     <string name="add_title">Add an app</string>
     <string name="add_name">App name</string>
@@ -325,4 +325,23 @@
     <string name="legend_done">done</string>
     <string name="legend_missed">missed</string>
     <string name="legend_today">today</string>
+    <string name="myapps_add_sub">Find 12+ testers and pass the 14-day test</string>
+    <string name="myapps_list_title">Apps (%1$d)</string>
+    <string name="myapps_suspended_reason">Reason: %1$s</string>
+    <string name="myapps_suspended_no_reason">not given</string>
+    <string name="myapps_suspended_body">Testers are paused with no penalty. Days do not count. The app is hidden from the list.</string>
+    <string name="myapps_appeal">Send an appeal</string>
+    <string name="myapps_suspended_sub">Stopped by an admin</string>
+    <string name="myapps_published_sub">Published to production</string>
+    <string name="myapps_campaign_day">Campaign · day %1$d</string>
+    <string name="myapps_campaign_waiting">Campaign · waiting for testers</string>
+    <string name="myapps_stat_testers">testers</string>
+    <string name="myapps_stat_done">reached 14 days</string>
+    <string name="myapps_stat_eta">ready (est.)</string>
+    <string name="profile_stat_earned">Coin14 earned in total</string>
+    <string name="profile_stat_apps">my apps</string>
+    <string name="profile_menu_published">Shipped with Track14</string>
+    <string name="profile_menu_telegram">Telegram community</string>
+    <string name="profile_reliability_pill">Reliability %1$d%%</string>
+    <string name="profile_sign_out">Sign out</string>
 </resources>

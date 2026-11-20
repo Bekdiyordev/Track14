@@ -92,9 +92,9 @@
     <string name="status_suspended">Заблокировано</string>
     <string name="status_removed">Удалено</string>
     <string name="myapps_signed_out">Войдите, чтобы разместить приложение</string>
-    <string name="myapps_add">Добавить</string>
+    <string name="myapps_add">Добавить приложение</string>
     <string name="myapps_empty">Приложений пока нет. Добавьте первое: 12 тестеров будут тестировать его 14 дней.</string>
-    <string name="myapps_draft_hint">Выберите тариф и начните тест</string>
+    <string name="myapps_draft_hint">Осталась настройка Play Console</string>
     <string name="myapps_stats">%1$d / %2$d тестеров · %3$d завершили 14 дней</string>
     <string name="add_title">Добавить приложение</string>
     <string name="add_name">Название</string>
@@ -325,4 +325,23 @@
     <string name="legend_done">выполнено</string>
     <string name="legend_missed">пропущено</string>
     <string name="legend_today">сегодня</string>
+    <string name="myapps_add_sub">Найдите 12+ тестеров и пройдите 14-дневный тест</string>
+    <string name="myapps_list_title">Приложения (%1$d)</string>
+    <string name="myapps_suspended_reason">Причина: %1$s</string>
+    <string name="myapps_suspended_no_reason">не указана</string>
+    <string name="myapps_suspended_body">Тестеры на паузе, штрафов нет. Дни не засчитываются. Приложение скрыто из списка.</string>
+    <string name="myapps_appeal">Подать апелляцию</string>
+    <string name="myapps_suspended_sub">Остановлено администратором</string>
+    <string name="myapps_published_sub">Вышло в продакшен</string>
+    <string name="myapps_campaign_day">Кампания · день %1$d</string>
+    <string name="myapps_campaign_waiting">Кампания · ждём тестеров</string>
+    <string name="myapps_stat_testers">тестеров</string>
+    <string name="myapps_stat_done">прошли 14 дней</string>
+    <string name="myapps_stat_eta">готово (прибл.)</string>
+    <string name="profile_stat_earned">всего заработано Coin14</string>
+    <string name="profile_stat_apps">мои приложения</string>
+    <string name="profile_menu_published">Вышли через Track14</string>
+    <string name="profile_menu_telegram">Сообщество в Telegram</string>
+    <string name="profile_reliability_pill">Надёжность %1$d%%</string>
+    <string name="profile_sign_out">Выйти из аккаунта</string>
 </resources>

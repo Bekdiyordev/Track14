@@ -42,6 +42,9 @@ data class OwnerApp(
     val optInUrl: String,
     val status: AppStatus,
     val campaign: CampaignSummary?,
+    /** Shown to the owner when an admin suspended the app. */
+    val suspendedReason: String = "",
+    val updatedAtMillis: Long = 0L,
 ) {
     /** Actions the server will accept now; mirrors `nextStatus` in campaigns.ts. */
     val availableActions: List<OwnerAction>

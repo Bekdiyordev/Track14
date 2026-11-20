@@ -94,9 +94,9 @@
     <string name="status_suspended">Bloklangan</string>
     <string name="status_removed">O\'chirilgan</string>
     <string name="myapps_signed_out">Ilovangizni joylash uchun kiring</string>
-    <string name="myapps_add">Qo\'shish</string>
+    <string name="myapps_add">Ilova qo\'shish</string>
     <string name="myapps_empty">Hali ilova yo\'q. Birinchisini qo\'shing: 12 tester 14 kun davomida test qiladi.</string>
-    <string name="myapps_draft_hint">Tarifni tanlab, testni boshlang</string>
+    <string name="myapps_draft_hint">Play Console sozlamasi qolgan</string>
     <string name="myapps_stats">%1$d / %2$d tester · %3$d tasi 14 kunni yakunladi</string>
     <string name="add_title">Ilova qo\'shish</string>
     <string name="add_name">Ilova nomi</string>
@@ -331,4 +331,23 @@
     <string name="legend_done">bajarildi</string>
     <string name="legend_missed">o\'tkazildi</string>
     <string name="legend_today">bugun</string>
+    <string name="myapps_add_sub">12+ tester toping va 14 kunlik testdan o\'ting</string>
+    <string name="myapps_list_title">Ilovalar (%1$d)</string>
+    <string name="myapps_suspended_reason">Sabab: %1$s</string>
+    <string name="myapps_suspended_no_reason">ko\'rsatilmagan</string>
+    <string name="myapps_suspended_body">Testerlar pauzada, ularga jarima yo\'q. Kunlar hisobga olinmaydi. Ilova ro\'yxatda ko\'rinmaydi.</string>
+    <string name="myapps_appeal">Apellyatsiya yuborish</string>
+    <string name="myapps_suspended_sub">Admin to\'xtatdi</string>
+    <string name="myapps_published_sub">Production\'ga chiqdi</string>
+    <string name="myapps_campaign_day">Kampaniya · %1$d-kun</string>
+    <string name="myapps_campaign_waiting">Kampaniya · testerlar kutilmoqda</string>
+    <string name="myapps_stat_testers">tester</string>
+    <string name="myapps_stat_done">14 kunga yetgan</string>
+    <string name="myapps_stat_eta">tayyor (taxm.)</string>
+    <string name="profile_stat_earned">jami ishlangan Coin14</string>
+    <string name="profile_stat_apps">mening ilovalarim</string>
+    <string name="profile_menu_published">Track14 orqali chiqqanlar</string>
+    <string name="profile_menu_telegram">Telegram hamjamiyat</string>
+    <string name="profile_reliability_pill">Ishonchlilik %1$d%%</string>
+    <string name="profile_sign_out">Akkauntdan chiqish</string>
 </resources>
