@@ -57,6 +57,7 @@ import uz.beko404.track14.feature.apps.AppsRoute
 import uz.beko404.track14.feature.myapps.ARG_APP_ID
 import uz.beko404.track14.feature.myapps.AddAppRoute
 import uz.beko404.track14.feature.myapps.DashboardRoute
+import uz.beko404.track14.feature.myapps.FeedbackListRoute
 import uz.beko404.track14.feature.myapps.MyAppsRoute
 import uz.beko404.track14.feature.myapps.PlanRoute
 import uz.beko404.track14.feature.jointest.JoinTestRoute
@@ -269,6 +270,7 @@ fun Track14App(
                         onPaid = { id ->
                             navController.navigate("$DASHBOARD_ROUTE/$id") { popUpTo(TopLevelDestination.MyApps.route) }
                         },
+                        onBuy = { navController.navigate(SHOP_ROUTE) },
                     )
                 }
                 composable(
@@ -279,8 +281,13 @@ fun Track14App(
                         onBack = { navController.popBackStack() },
                         onReportTester = { testId -> navController.navigate("$REPORT_ROUTE/tester/$testId") },
                         onOpenTester = { testId -> navController.navigate("$TESTER_DETAIL_ROUTE/${entry.arguments?.getString(ARG_APP_ID)}/$testId") },
+                        onOpenFeedback = { navController.navigate("$FEEDBACKS_ROUTE/${entry.arguments?.getString(ARG_APP_ID)}") },
                     )
                 }
+                composable(
+                    route = "$FEEDBACKS_ROUTE/{$ARG_APP_ID}",
+                    arguments = listOf(navArgument(ARG_APP_ID) { type = NavType.StringType }),
+                ) { FeedbackListRoute(onBack = { navController.popBackStack() }) }
                 composable(
                     route = "$TESTER_DETAIL_ROUTE/{${TesterDetailViewModel.ARG_APP_ID}}/{${TesterDetailViewModel.ARG_TEST_ID}}",
                     arguments = listOf(
@@ -328,6 +335,7 @@ private const val PLAN_ROUTE = "plan"
 private const val DASHBOARD_ROUTE = "dashboard"
 private const val WALLET_ROUTE = "wallet"
 private const val SHOP_ROUTE = "shop"
+private const val FEEDBACKS_ROUTE = "feedbacks"
 private const val FEEDBACK_ROUTE = "feedback"
 private const val REPORT_ROUTE = "report"
 private const val NOTIFICATIONS_ROUTE = "notifications"

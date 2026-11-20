@@ -73,6 +73,25 @@ data class CampaignTester(
     /** Two letters for the avatar circle, "?" when the name is unknown. */
     val initials: String
         get() = name.split(' ').filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }.ifEmpty { "?" }
+
+    /** Day 1..14 in the tester's own time zone, null before the test starts. */
+    fun dayNumber(nowMillis: Long): Int? {
+        val start = startedAtMillis ?: return null
+        val zone = runCatching { java.time.ZoneId.of(timezone) }.getOrDefault(java.time.ZoneOffset.UTC)
+        return uz.beko404.track14.domain.rules.DailyCheckRules.dayNumber(
+            java.time.Instant.ofEpochMilli(start), java.time.Instant.ofEpochMilli(nowMillis), zone,
+        )
+    }
+
+    /** Days in a row passed up to (and including) the last finished day. */
+    fun streak(nowMillis: Long): Int {
+        val today = (dayNumber(nowMillis) ?: return 0).coerceIn(1, days.size)
+        var i = today - 1
+        if (i >= 0 && days[i] != DayStatus.PASSED) i--
+        var n = 0
+        while (i >= 0 && days[i] == DayStatus.PASSED) { n++; i-- }
+        return n
+    }
 }
 
 /** Fixed categories (stored as shown; translations come with uz/ru/en). */

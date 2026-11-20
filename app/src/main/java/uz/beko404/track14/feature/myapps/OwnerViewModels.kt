@@ -141,6 +141,13 @@ class AddAppViewModel @Inject constructor(
         }
     }
 
+    /** Page 1 → 2 of the wizard: checks only the fields on the details page. */
+    fun detailsValid(): Boolean {
+        val bad = NewAppRules.errors(_state.value.form) - NewAppField.OPT_IN
+        if (bad.isNotEmpty()) _state.update { it.copy(showErrors = true) }
+        return bad.isEmpty()
+    }
+
     fun submit() {
         val s = _state.value
         if (s.saving) return
@@ -175,13 +182,23 @@ data class PlanUiState(
     val economy: EconomyConfig = EconomyConfig(),
     val balance: Coins? = null,
     val selected: Plan = Plan.STANDARD,
+    /** Optional "3 days on top" bought right after the listing fee. */
+    val top: Boolean = false,
     val paying: Boolean = false,
     val error: DomainError? = null,
     val paid: Boolean = false,
 ) {
     val fee: Coins get() = economy.fee(selected)
+    val topPrice: Coins get() = economy.featurePrice(TOP_DAYS)
+    val total: Coins get() = Coins(fee.value + if (top) topPrice.value else 0L)
+    val shortage: Long get() = balance?.let { (total.value - it.value).coerceAtLeast(0L) } ?: 0L
     val canPay: Boolean
-        get() = app != null && balance != null && !paying && ScoringRules(economy).canAffordListing(balance, selected)
+        get() = app != null && balance != null && !paying && shortage == 0L &&
+            ScoringRules(economy).canAffordListing(balance, selected)
+
+    companion object {
+        const val TOP_DAYS = 3
+    }
 }
 
 @HiltViewModel
@@ -209,15 +226,21 @@ class PlanViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlanUiState())
 
     fun select(plan: Plan) = local.update { it.copy(selected = plan, error = null) }
+    fun toggleTop() = local.update { it.copy(top = !it.top, error = null) }
 
     fun pay() {
         val id = appId ?: return
         if (!state.value.canPay) return
         val plan = state.value.selected
+        val top = state.value.top
         local.update { it.copy(paying = true, error = null) }
         viewModelScope.launch {
             when (val r = owner.createCampaign(id, plan)) {
-                is DomainResult.Success -> local.update { it.copy(paying = false, paid = true) }
+                is DomainResult.Success -> {
+                    // The listing is paid either way; a failed top purchase can be retried from the dashboard.
+                    if (top) owner.featureApp(id, PlanUiState.TOP_DAYS, java.util.UUID.randomUUID().toString().replace("-", ""))
+                    local.update { it.copy(paying = false, paid = true) }
+                }
                 is DomainResult.Failure -> local.update { it.copy(paying = false, error = r.error) }
             }
         }
