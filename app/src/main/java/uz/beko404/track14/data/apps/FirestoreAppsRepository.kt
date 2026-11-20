@@ -85,6 +85,10 @@ internal fun catalogAppFrom(id: String, data: Map<String, Any?>): CatalogApp? {
         featuredUntilMillis = data["featuredUntil"].toMillis(),
         packageName = (data["packageName"] as? String)?.takeIf(PlayLinks::isValidPackageName).orEmpty(),
         optInUrl = (data["optInUrl"] as? String)?.takeIf(PlayLinks::isValidOptInUrl).orEmpty(),
+        completionBonus = Coins((data["completionBonus"] as? Number)?.toLong()?.coerceAtLeast(0) ?: 0L),
+        ownerName = (data["ownerName"] as? String)?.trim()?.take(40).orEmpty(),
+        ownerReliability = (data["ownerReliability"] as? Number)?.toInt()?.coerceIn(0, 100),
+        ownerTests = (data["ownerTests"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0,
     )
 }
 

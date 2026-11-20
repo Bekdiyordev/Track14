@@ -29,6 +29,10 @@ export function buildCatalogEntry(app: Data | undefined, campaign: Data | undefi
     createdAt: campaign.startedAt ?? null,
     packageName: isValidPackageName(app.packageName) ? app.packageName : "",
     optInUrl: isValidOptInUrl(app.optInUrl) ? app.optInUrl : "",
+    completionBonus: num(campaign.completionBonus),
+    ownerName: typeof campaign.ownerName === "string" ? campaign.ownerName.slice(0, 40) : "",
+    ownerReliability: typeof campaign.ownerReliability === "number" ? campaign.ownerReliability : null,
+    ownerTests: num(campaign.ownerTests),
   };
 }
 

@@ -5,6 +5,8 @@ import { z } from "zod";
 import { buildCatalogEntry, isValidPackageName } from "./catalog";
 import { featurePrice, fee, loadEconomy, rewardPerDay } from "./economy";
 import { docId, parse, requireActiveUser } from "./guards";
+import { shortName } from "./tests";
+import { reliability } from "./stats";
 import { applyEntry, readEntry, walletRef } from "./ledger";
 import { callableOptions, REGION } from "./options";
 import { ledgerKey } from "./rules";
@@ -29,11 +31,12 @@ export const createCampaign = onCall(callableOptions, async (req) => {
   return db().runTransaction(async (tx) => {
     const appRef = db().collection("apps").doc(appId);
     const campaignRef = db().collection("campaigns").doc(appId);
-    const [app, campaign, wallet, entry] = await Promise.all([
+    const [app, campaign, wallet, entry, owner] = await Promise.all([
       tx.get(appRef),
       tx.get(campaignRef),
       tx.get(walletRef(uid)),
       readEntry(tx, key),
+      tx.get(db().collection("users").doc(uid)),
     ]);
     if (!app.exists || app.get("ownerUid") !== uid) throw new HttpsError("not-found", "app_not_found");
     if (campaign.exists) return { campaignId: appId, created: false };
@@ -65,11 +68,23 @@ export const createCampaign = onCall(callableOptions, async (req) => {
       startedAt: FieldValue.serverTimestamp(),
       featuredUntil: null,
       stats: { joined: 0, completed14: 0, failed: 0, left: 0 },
+      // Public card on the app page: short name and record only, never e-mail or uid.
+      ...ownerSnapshot(owner),
     });
     tx.update(appRef, { status: "active" });
     return { campaignId: appId, created: true };
   });
 });
+
+/** What testers see about the owner on the app page. */
+export function ownerSnapshot(owner: { get(field: string): unknown }): Record<string, unknown> {
+  const stats = (owner.get("stats") ?? {}) as Record<string, number>;
+  return {
+    ownerName: shortName(owner.get("displayName")),
+    ownerReliability: reliability(stats),
+    ownerTests: Number(stats.testsStarted ?? 0),
+  };
+}
 
 const SetStatus = z.object({ appId: docId, action: z.enum(["pause", "resume", "publish"]) }).strict();
 

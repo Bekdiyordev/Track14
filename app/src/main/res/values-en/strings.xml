@@ -344,4 +344,9 @@
     <string name="profile_menu_telegram">Telegram community</string>
     <string name="profile_reliability_pill">Reliability %1$d%%</string>
     <string name="profile_sign_out">Sign out</string>
+    <string name="detail_days_value">14 days</string>
+    <string name="detail_days_label">30 s every day</string>
+    <string name="detail_total_coins">Coin14 in total</string>
+    <string name="detail_owner_sub">Owner · took part in %1$d tests</string>
+    <string name="detail_bonus_end">+%1$d bonus at the end</string>
 </resources>

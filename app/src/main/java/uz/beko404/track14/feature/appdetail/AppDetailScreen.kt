@@ -1,5 +1,27 @@
 package uz.beko404.track14.feature.appdetail
 
+import uz.beko404.track14.core.designsystem.T14Theme
+import uz.beko404.track14.core.designsystem.T14Paths
+import uz.beko404.track14.core.designsystem.T14Icon
+import uz.beko404.track14.core.designsystem.T14Card
+import uz.beko404.track14.core.designsystem.SkeletonList
+import uz.beko404.track14.core.designsystem.PrimaryButton
+import uz.beko404.track14.core.designsystem.Manrope
+import uz.beko404.track14.core.designsystem.Coin14Icon
+import uz.beko404.track14.core.designsystem.BackButton
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,113 +96,144 @@ fun AppDetailScreen(
     onStart: () -> Unit,
     onReport: () -> Unit,
 ) {
+    val c = T14Theme.colors
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.detail_back))
+        Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            BackButton(onBack)
+            Spacer(Modifier.weight(1f))
+            if (signedIn && state is AppDetailUiState.Content) {
+                val label = stringResource(R.string.report_title)
+                Box(
+                    Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onReport).semantics { contentDescription = label },
+                    contentAlignment = Alignment.Center,
+                ) { T14Icon(T14Paths.Flag, size = 22.dp, tint = c.textBody) }
             }
         }
         when (state) {
-            AppDetailUiState.Loading -> Centered { CircularProgressIndicator() }
-            AppDetailUiState.NotFound -> Centered { Text(stringResource(R.string.detail_not_found)) }
-            is AppDetailUiState.Error -> Centered { Text(stringResource(R.string.apps_error)) }
+            AppDetailUiState.Loading -> SkeletonList(count = 3, modifier = Modifier.padding(20.dp))
+            AppDetailUiState.NotFound -> Centered(stringResource(R.string.detail_not_found))
+            is AppDetailUiState.Error -> Centered(stringResource(R.string.apps_error))
             is AppDetailUiState.Content -> {
-                Column(
-                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    Header(state.app)
-                    Stats(state.app)
-                    Section(stringResource(R.string.detail_about)) {
-                        Text(
-                            state.app.shortDesc.ifBlank { stringResource(R.string.detail_no_desc) },
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    Section(stringResource(R.string.detail_how)) {
-                        listOf(R.string.detail_step_1, R.string.detail_step_2, R.string.detail_step_3)
-                            .forEachIndexed { index, step ->
-                                Text("${index + 1}. ${stringResource(step)}", style = MaterialTheme.typography.bodyMedium)
+                val app = state.app
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        AppTile(app.id, app.name, size = 76.dp, category = app.category)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(app.name, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, lineHeight = 30.sp)
+                            Text(
+                                listOf(app.ownerName, app.packageName).filter { it.isNotBlank() }.joinToString(" · "),
+                                fontSize = 14.sp, color = c.textBody, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if (app.isPro) {
+                                    Text(
+                                        "PRO", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp,
+                                        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(c.listProBg).padding(horizontal = 8.dp, vertical = 4.dp),
+                                    )
+                                }
+                                if (app.category.isNotBlank()) {
+                                    Text(
+                                        app.category, color = c.blueSoftText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(c.blueSoft).padding(horizontal = 10.dp, vertical = 4.dp),
+                                    )
+                                }
                             }
-                    }
-                    if (signedIn) {
-                        TextButton(onClick = onReport) {
-                            Text(stringResource(R.string.report_title), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                }
-                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(
-                        onClick = if (signedIn) onStart else onSignIn,
-                        enabled = !isSigningIn,
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(16.dp),
-                    ) {
-                        Text(stringResource(if (signedIn) R.string.detail_start else R.string.detail_sign_in_to_start))
+                    Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatBox(stringResource(R.string.testers_progress_short, app.testersJoined, app.testersNeeded), stringResource(R.string.myapps_stat_testers), Modifier.weight(1f))
+                        StatBox(stringResource(R.string.detail_days_value), stringResource(R.string.detail_days_label), Modifier.weight(1f))
+                        val total = app.rewardPerDay.value * 14 + app.completionBonus.value
+                        Column(
+                            Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(c.coinBg).padding(horizontal = 12.dp, vertical = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(total.toString(), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = c.coinText)
+                            Text(stringResource(R.string.detail_total_coins), fontSize = 12.sp, color = c.coinText)
+                        }
+                    }
+                    Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.detail_about), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            app.shortDesc.ifBlank { stringResource(R.string.detail_no_desc) },
+                            fontSize = 15.sp, lineHeight = 23.sp, color = c.textBody,
+                        )
+                    }
+                    T14Card(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp), radius = 18.dp, padding = PaddingValues(16.dp)) {
+                        Text(stringResource(R.string.detail_how), style = MaterialTheme.typography.titleMedium)
+                        listOf(R.string.detail_step_1, R.string.detail_step_2, R.string.detail_step_3).forEachIndexed { i, step ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(26.dp).clip(CircleShape).background(c.blueSoft), contentAlignment = Alignment.Center) {
+                                    Text("${i + 1}", color = c.blueSoftText, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Text(stringResource(step), fontSize = 15.sp, lineHeight = 22.sp, color = c.textBody)
+                            }
+                        }
+                    }
+                    if (app.ownerName.isNotBlank()) {
+                        T14Card(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp), radius = 18.dp, padding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                val initials = app.ownerName.split(' ').filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }
+                                Box(Modifier.size(40.dp).clip(CircleShape).background(if (c.dark) Color(0xFF14264D) else Color(0xFFDBEAFE)), contentAlignment = Alignment.Center) {
+                                    Text(initials, color = c.blueSoftText, fontWeight = FontWeight.Bold)
+                                }
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(app.ownerName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.detail_owner_sub, app.ownerTests), fontSize = 13.sp, color = c.textSecondary)
+                                }
+                                app.ownerReliability?.let {
+                                    Text(
+                                        "$it%", color = c.successText, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(c.successSoft).padding(horizontal = 10.dp, vertical = 5.dp),
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Header(app: CatalogApp) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        AppTile(app.id, app.name, size = 72.dp)
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(app.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                if (app.isPro) ProBadge()
-            }
-            Text(app.category, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-@Composable
-private fun Stats(app: CatalogApp) {
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Stat(stringResource(R.string.detail_testers), Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.testers_progress, app.testersJoined, app.testersNeeded),
-                        fontWeight = FontWeight.Bold,
+                // Bottom bar: reward on the left, gradient CTA on the right.
+                Row(
+                    Modifier.fillMaxWidth().background(c.navBar)
+                        .drawBehind { drawLine(c.navBorder, androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(size.width, 0f), 1.dp.toPx()) }
+                        .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Coin14Icon(18.dp)
+                            Text(stringResource(R.string.reward_per_day_long, app.rewardPerDay.value.toInt()).removePrefix("+"), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = c.coinText)
+                        }
+                        if (app.completionBonus.value > 0) {
+                            Text(stringResource(R.string.detail_bonus_end, app.completionBonus.value.toInt()), fontSize = 12.sp, color = c.textSecondary)
+                        }
+                    }
+                    PrimaryButton(
+                        text = stringResource(if (signedIn) R.string.detail_start else R.string.detail_sign_in_to_start),
+                        onClick = if (signedIn) onStart else onSignIn,
+                        enabled = !isSigningIn,
+                        height = 56.dp,
+                        modifier = Modifier.weight(1f),
                     )
                 }
-                Stat(stringResource(R.string.detail_reward), Modifier.weight(1f)) {
-                    CoinAmount(stringResource(R.string.reward_per_day, app.rewardPerDay.value.toInt()))
-                }
-                Stat(stringResource(R.string.detail_duration), Modifier.weight(1f)) {
-                    Text(stringResource(R.string.detail_duration_value), fontWeight = FontWeight.Bold)
-                }
             }
-            AnimatedProgress(app.testersProgress, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
-private fun Stat(label: String, modifier: Modifier, value: @Composable () -> Unit) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        value()
+private fun StatBox(value: String, label: String, modifier: Modifier) {
+    T14Card(modifier, radius = 16.dp, padding = PaddingValues(horizontal = 12.dp, vertical = 14.dp), spacing = 4.dp) {
+        Text(value, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, maxLines = 1)
+        Text(label, fontSize = 12.sp, color = T14Theme.colors.textSecondary, maxLines = 1)
     }
 }
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
-        content()
+private fun Centered(text: String) {
+    Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+        Text(text, color = T14Theme.colors.textSecondary)
     }
-}
-
-@Composable
-private fun Centered(content: @Composable () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { content() }
 }

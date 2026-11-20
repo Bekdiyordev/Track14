@@ -344,4 +344,9 @@
     <string name="profile_menu_telegram">Сообщество в Telegram</string>
     <string name="profile_reliability_pill">Надёжность %1$d%%</string>
     <string name="profile_sign_out">Выйти из аккаунта</string>
+    <string name="detail_days_value">14 дней</string>
+    <string name="detail_days_label">по 30 с в день</string>
+    <string name="detail_total_coins">Coin14 всего</string>
+    <string name="detail_owner_sub">Владелец · участвовал в %1$d тестах</string>
+    <string name="detail_bonus_end">+%1$d бонус в конце</string>
 </resources>

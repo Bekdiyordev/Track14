@@ -17,3 +17,11 @@ describe("tester snapshot", () => {
     assert.equal(JSON.stringify(s).includes("x@y.z"), false);
   });
 });
+
+describe("owner snapshot on campaigns", () => {
+  it("keeps only the short name and record", async () => {
+    const { ownerSnapshot } = await import("../campaigns");
+    const s = ownerSnapshot(doc({ displayName: "Aziz Karimov", email: "a@b.c", stats: { testsStarted: 23, testsCompleted: 22, testsFailed: 1 } }));
+    assert.deepEqual(s, { ownerName: "Aziz K.", ownerReliability: 96, ownerTests: 23 });
+  });
+});

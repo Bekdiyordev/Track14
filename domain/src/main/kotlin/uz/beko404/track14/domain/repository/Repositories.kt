@@ -91,6 +91,11 @@ data class CatalogApp(
     /** Empty when the owner gave no valid value; checked with [uz.beko404.track14.domain.model.PlayLinks]. */
     val packageName: String = "",
     val optInUrl: String = "",
+    val completionBonus: Coins = Coins(0),
+    /** Owner card on the app page: short name and record from the campaign snapshot. */
+    val ownerName: String = "",
+    val ownerReliability: Int? = null,
+    val ownerTests: Int = 0,
 ) {
     /** 0..1, how far the app is from the testers it needs. */
     val testersProgress: Float

@@ -350,4 +350,9 @@
     <string name="profile_menu_telegram">Telegram hamjamiyat</string>
     <string name="profile_reliability_pill">Ishonchlilik %1$d%%</string>
     <string name="profile_sign_out">Akkauntdan chiqish</string>
+    <string name="detail_days_value">14 kun</string>
+    <string name="detail_days_label">har kuni 30 s</string>
+    <string name="detail_total_coins">Coin14 jami</string>
+    <string name="detail_owner_sub">Ilova egasi · %1$d ta testda qatnashgan</string>
+    <string name="detail_bonus_end">+%1$d bonus oxirida</string>
 </resources>

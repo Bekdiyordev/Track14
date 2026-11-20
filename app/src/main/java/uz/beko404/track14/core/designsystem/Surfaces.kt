@@ -89,17 +89,21 @@ fun T14Card(
     )
 }
 
-/** Main action: 52dp, 16dp corners, brand blue, Inter 16/600. */
+/** Main action: blue gradient (#3B82F6 → #2563EB), 16dp corners, soft blue shadow, Inter 16/600. */
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.fillMaxWidth().height(52.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Track14Colors.Blue600, contentColor = Color.White),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-    ) { Text(text, style = MaterialTheme.typography.labelLarge) }
+fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, height: Dp = 52.dp) {
+    val shape = RoundedCornerShape(16.dp)
+    Box(
+        modifier.fillMaxWidth().height(height)
+            .shadow(if (enabled) 10.dp else 0.dp, shape, ambientColor = Color(0x472563EB), spotColor = Color(0x472563EB))
+            .clip(shape)
+            .background(
+                if (enabled) Brush.verticalGradient(listOf(Color(0xFF3B82F6), Color(0xFF2563EB)))
+                else Brush.verticalGradient(listOf(Color(0xFF93C5FD), Color(0xFF93C5FD))),
+            )
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Text(text, style = MaterialTheme.typography.labelLarge, color = Color.White) }
 }
 
 /** Second action: white with the light blue border (#BFDBFE) and blue text. */
