@@ -13,6 +13,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 
 private val LightColors = lightColorScheme(
@@ -58,18 +59,27 @@ private val Track14Shapes = Shapes(
 fun Track14Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
+) = ThemeReveal(darkTheme) { shownDark -> Track14ThemeContent(shownDark, content) }
+
+@Composable
+private fun Track14ThemeContent(
+    darkTheme: Boolean,
+    content: @Composable () -> Unit,
 ) {
     val activity = LocalActivity.current as? ComponentActivity
+    // MainActivity handles locale changes in place, and on such a change the window falls back to the
+    // XML theme's (light) system bars. Reading the configuration re-runs this effect after every change.
+    val configuration = LocalConfiguration.current
     SideEffect {
+        configuration.hashCode()
+        // Explicit light/dark styles: "auto" leaves the nav bar scrim to the system's contrast
+        // enforcement, which follows the device's dark mode instead of the app's theme.
+        val navLight = android.graphics.Color.argb(0xe6, 0xff, 0xff, 0xff)
+        val navDark = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+        val clear = android.graphics.Color.TRANSPARENT
         activity?.enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-            ) { darkTheme },
-            navigationBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.argb(0xe6, 0xff, 0xff, 0xff),
-                android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b),
-            ) { darkTheme },
+            statusBarStyle = if (darkTheme) SystemBarStyle.dark(clear) else SystemBarStyle.light(clear, clear),
+            navigationBarStyle = if (darkTheme) SystemBarStyle.dark(navDark) else SystemBarStyle.light(navLight, navDark),
         )
     }
     androidx.compose.runtime.CompositionLocalProvider(LocalT14Colors provides if (darkTheme) DarkExtraColors else LightExtraColors) {
@@ -77,7 +87,12 @@ fun Track14Theme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
             typography = Track14Typography,
             shapes = Track14Shapes,
-            content = content,
-        )
+        ) {
+            // No Surface sits at the root, so give bare Text/Icon the theme's colour instead of black.
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onBackground,
+                content = content,
+            )
+        }
     }
 }
