@@ -142,7 +142,12 @@ class DashboardViewModel @Inject constructor(private val repo: AdminRepository) 
 @HiltViewModel
 class UsersViewModel @Inject constructor(private val repo: AdminRepository) : LoadingViewModel<List<AdminUser>>() {
     val query = MutableStateFlow("")
-    override suspend fun fetch() = repo.users(query.value)
+    val blockedOnly = MutableStateFlow(false)
+    override suspend fun fetch() = repo.users(query.value, blockedOnly.value)
+    fun setBlockedOnly(on: Boolean) {
+        blockedOnly.value = on
+        load()
+    }
 }
 
 @HiltViewModel

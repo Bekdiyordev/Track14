@@ -94,9 +94,10 @@ class AdminRepository @Inject constructor(
     }
 
     /** Exact e-mail or uid search; empty query = newest users. */
-    suspend fun users(query: String): DomainResult<List<AdminUser>> = load {
+    suspend fun users(query: String, blockedOnly: Boolean = false): DomainResult<List<AdminUser>> = load {
         val q = query.trim()
         val docs = when {
+            blockedOnly && q.isEmpty() -> db.collection("users").whereEqualTo("blocked", true).limit(50).get().await().documents
             q.contains('@') -> db.collection("users").whereEqualTo("email", q.lowercase()).limit(20).get().await().documents
             q.isNotEmpty() -> listOfNotNull(db.collection("users").document(q).get().await().takeIf { it.exists() })
             else -> db.collection("users").orderBy("createdAt", Query.Direction.DESCENDING).limit(50).get().await().documents
