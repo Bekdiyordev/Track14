@@ -1,36 +1,16 @@
 package uz.beko404.track14.feature.welcome
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,18 +19,29 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import uz.beko404.track14.R
 import uz.beko404.track14.core.designsystem.Coin14Icon
+import uz.beko404.track14.core.designsystem.Manrope
+import uz.beko404.track14.core.designsystem.PrimaryButton
+import uz.beko404.track14.core.designsystem.ScreenBackground
+import uz.beko404.track14.core.designsystem.T14Icon
+import uz.beko404.track14.core.designsystem.T14Paths
+import uz.beko404.track14.core.designsystem.T14Theme
 import uz.beko404.track14.core.designsystem.Track14Colors
+import uz.beko404.track14.core.designsystem.Track14Logo
+import uz.beko404.track14.core.designsystem.Track14Wordmark
 import uz.beko404.track14.core.settings.AppLanguage
 import uz.beko404.track14.core.settings.ThemeMode
 
@@ -62,59 +53,118 @@ fun LanguageScreen(
     darkTheme: Boolean,
     onToggleTheme: () -> Unit,
     onContinue: (AppLanguage) -> Unit,
+    theme: ThemeMode? = null,
+    onTheme: (ThemeMode) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf(current) }
-    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(24.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            // Theme toggle: sun in dark mode, moon in light mode (canvas decision), monochrome.
-            IconButton(
-                onClick = onToggleTheme,
-                modifier = Modifier.size(44.dp).border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), CircleShape),
+    val c = T14Theme.colors
+    ScreenBackground {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                // Theme toggle: moon in light mode, sun in dark mode.
+                val label = stringResource(if (darkTheme) R.string.theme_to_light else R.string.theme_to_dark)
+                Box(
+                    Modifier.align(Alignment.TopEnd).padding(16.dp).size(44.dp).clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surface).border(1.dp, c.fieldBorder, CircleShape)
+                        .clickable(onClick = onToggleTheme).semantics { contentDescription = label },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    T14Icon(
+                        if (darkTheme) SUN else MOON,
+                        size = 22.dp, tint = MaterialTheme.colorScheme.onSurface, strokeWidth = 2.2f,
+                    )
+                }
+                Column(
+                    Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, top = 40.dp, bottom = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                ) {
+                    Track14Logo(112.dp)
+                    Track14Wordmark(44)
+                    Text(stringResource(R.string.brand_tagline), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.textBody)
+                }
+            }
+            Column(
+                Modifier.fillMaxWidth()
+                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .navigationBarsPadding()
+                    .padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                Icon(
-                    painterResource(if (darkTheme) R.drawable.ic_sun else R.drawable.ic_moon),
-                    contentDescription = stringResource(if (darkTheme) R.string.theme_to_light else R.string.theme_to_dark),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stringResource(R.string.lang_title), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                    Text(stringResource(R.string.lang_subtitle), fontSize = 14.sp, color = c.textSecondary)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AppLanguage.entries.forEach { lang -> LanguageOption(lang, selected == lang) { selected = lang } }
+                }
+                if (theme != null) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.settings_theme_caps), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.textSecondary, letterSpacing = 0.4.sp)
+                        ThemeSegmented(theme, onTheme)
+                    }
+                }
+                PrimaryButton(stringResource(R.string.action_continue), onClick = { onContinue(selected) }, height = 56.dp)
             }
         }
-        Column(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
-        ) {
-            BrandMark(size = 88)
-            Text(stringResource(R.string.lang_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-            Text(stringResource(R.string.lang_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            AppLanguage.entries.forEach { lang ->
-                LanguageOption(lang, selected == lang) { selected = lang }
+    }
+}
+
+private const val MOON = "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"
+private const val SUN = "M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"
+private const val SCREEN = "M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M8 21h8M12 17v4"
+
+@Composable
+private fun ThemeSegmented(theme: ThemeMode, onTheme: (ThemeMode) -> Unit) {
+    val c = T14Theme.colors
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(if (c.dark) Color(0xFF1E293B) else Color(0xFFE5E7EB)).padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        listOf(
+            Triple(ThemeMode.LIGHT, R.string.theme_light, SUN),
+            Triple(ThemeMode.DARK, R.string.theme_dark, MOON),
+            Triple(ThemeMode.SYSTEM, R.string.theme_system, SCREEN),
+        ).forEach { (mode, label, icon) ->
+            val on = mode == theme
+            Row(
+                Modifier.weight(1f).height(40.dp)
+                    .then(if (on) Modifier.shadow(1.dp, RoundedCornerShape(12.dp)) else Modifier)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (on) (if (c.dark) Color(0xFF334155) else Color.White) else Color.Transparent)
+                    .clickable(role = Role.RadioButton) { onTheme(mode) },
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val fg = if (on) MaterialTheme.colorScheme.onSurface else c.textBody
+                T14Icon(icon, size = 16.dp, tint = fg, strokeWidth = 2.2f)
+                Text(stringResource(label), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = fg)
             }
         }
-        Button(
-            onClick = { onContinue(selected) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) { Text(stringResource(R.string.action_continue)) }
     }
 }
 
 @Composable
 private fun LanguageOption(lang: AppLanguage, selected: Boolean, onClick: () -> Unit) {
-    val border by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
-        label = "lang",
-    )
+    val c = T14Theme.colors
+    val shape = RoundedCornerShape(16.dp)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .border(if (selected) 2.dp else 1.dp, border, RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+        Modifier.fillMaxWidth().heightIn(min = 60.dp).clip(shape)
+            .background(if (selected) c.blueSoft else MaterialTheme.colorScheme.surface)
+            .border(if (selected) 2.dp else 1.dp, if (selected) Track14Colors.Blue600 else c.fieldBorder, shape)
+            .clickable(role = Role.RadioButton, onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(stringResource(lang.label()), modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-        if (selected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Box(
+            Modifier.size(22.dp).clip(CircleShape).border(2.dp, if (selected) Track14Colors.Blue600 else Color(0xFFCBD5E1), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { if (selected) Box(Modifier.size(10.dp).clip(CircleShape).background(Track14Colors.Blue600)) }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(lang.label()), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(lang.script()), fontSize = 13.sp, color = if (selected) c.textBody else c.textSecondary)
+        }
     }
 }
 
@@ -124,82 +174,171 @@ fun AppLanguage.label(): Int = when (this) {
     AppLanguage.EN -> R.string.lang_en
 }
 
+private fun AppLanguage.script(): Int = when (this) {
+    AppLanguage.UZ -> R.string.lang_uz_script
+    AppLanguage.RU -> R.string.lang_ru_script
+    AppLanguage.EN -> R.string.lang_en_script
+}
+
+/** Kept for callers that still show the small brand tile. */
 @Composable
 fun BrandMark(size: Int) {
-    Box(
-        modifier = Modifier
-            .size(size.dp)
-            .background(Brush.linearGradient(listOf(Track14Colors.Blue500, Track14Colors.Blue700)), RoundedCornerShape((size * 0.28).dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size((size * 1.4).dp))
-    }
+    Track14Logo(size.dp)
 }
 
 // ---------------------------------------------------------------- onboarding
 
-private data class Slide(val title: Int, val body: Int, val icon: ImageVector?, val coin: Boolean = false)
-
 @Composable
 fun OnboardingScreen(onDone: () -> Unit) {
     val slides = listOf(
-        Slide(R.string.onb1_title, R.string.onb1_body, Icons.Filled.CheckCircle),
-        Slide(R.string.onb2_title, R.string.onb2_body, null, coin = true),
-        Slide(R.string.onb3_title, R.string.onb3_body, Icons.Filled.Send),
+        R.string.onb1_title to R.string.onb1_body,
+        R.string.onb2_title to R.string.onb2_body,
+        R.string.onb3_title to R.string.onb3_body,
     )
     val pager = rememberPagerState { slides.size }
     val scope = rememberCoroutineScope()
     val last = pager.currentPage == slides.lastIndex
+    val c = T14Theme.colors
 
-    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(24.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            if (!last) TextButton(onClick = onDone) { Text(stringResource(R.string.onb_skip)) }
-        }
-        HorizontalPager(state = pager, modifier = Modifier.weight(1f)) { page ->
-            val s = slides[page]
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically),
-            ) {
+    ScreenBackground {
+        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp), horizontalArrangement = Arrangement.End) {
                 Box(
-                    modifier = Modifier
-                        .size(140.dp)
-                        .background(Brush.linearGradient(listOf(Track14Colors.Blue500, Track14Colors.Blue700)), RoundedCornerShape(40.dp)),
+                    Modifier.height(44.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onDone).padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center,
-                ) {
-                    when {
-                        s.coin -> Coin14Icon(72.dp)
-                        s.icon != null -> Icon(s.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(64.dp))
+                ) { Text(stringResource(R.string.onb_skip), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = c.textBody) }
+            }
+            HorizontalPager(state = pager, modifier = Modifier.weight(1f)) { page ->
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 32.dp), contentAlignment = Alignment.Center) {
+                        when (page) {
+                            0 -> SlideDays()
+                            1 -> SlideCoins()
+                            else -> SlideOwner()
+                        }
                     }
-                    if (page == 0) {
-                        Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFDE68A), modifier = Modifier.align(Alignment.TopEnd).padding(14.dp).size(22.dp))
+                    Column(Modifier.padding(horizontal = 28.dp).heightIn(min = 120.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(stringResource(slides[page].first), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp, lineHeight = 34.sp)
+                        Text(stringResource(slides[page].second), fontSize = 16.sp, lineHeight = 24.sp, color = c.textBody)
                     }
                 }
-                Text(stringResource(s.title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
-                Text(stringResource(s.body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
-        }
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalArrangement = Arrangement.Center) {
-            slides.indices.forEach { i ->
-                val width by animateDpAsState(if (i == pager.currentPage) 24.dp else 8.dp, label = "dot")
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .height(8.dp)
-                        .width(width)
-                        .background(
-                            if (i == pager.currentPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                            RoundedCornerShape(999.dp),
-                        ),
+            Row(
+                Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 36.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    slides.indices.forEach { i ->
+                        val width by animateDpAsState(if (i == pager.currentPage) 28.dp else 8.dp, label = "dot")
+                        Box(
+                            Modifier.height(8.dp).width(width).clip(RoundedCornerShape(999.dp))
+                                .background(if (i == pager.currentPage) Track14Colors.Blue600 else (if (c.dark) Color(0xFF1E3A8A) else Color(0xFFBFDBFE))),
+                        )
+                    }
+                }
+                PrimaryButton(
+                    stringResource(if (last) R.string.onb_start else R.string.onb_next),
+                    onClick = { if (last) onDone() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
+                    modifier = Modifier.width(IntrinsicSize.Max).widthIn(min = 132.dp),
+                    height = 56.dp,
                 )
             }
         }
-        Button(
-            onClick = { if (last) onDone() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) { Text(stringResource(if (last) R.string.onb_start else R.string.onb_next)) }
+    }
+}
+
+@Composable
+private fun SlideCard(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier.width(300.dp).shadow(if (T14Theme.colors.dark) 0.dp else 2.dp, RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(if (T14Theme.colors.dark) 1.dp else 0.dp, T14Theme.colors.cardBorder, RoundedCornerShape(24.dp))
+            .padding(22.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        content = content,
+    )
+}
+
+/** Slide 1: a test card with 14 cells filling up and today's check done. */
+@Composable
+private fun SlideDays() {
+    val c = T14Theme.colors
+    val green = Color(0xFF22C55E)
+    val cells = listOf(green, green, green, green, Color(0xFFDC2626), green, green, green, Color(0xFFF59E0B)) +
+        List(5) { if (c.dark) Color(0xFF263247) else Color(0xFFE2E8F0) }
+    SlideCard {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF0EA5E9)), contentAlignment = Alignment.Center) {
+                Text("L", color = Color.White, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Lug'at Pro", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.testdetail_day_of, 9), fontSize = 13.sp, color = c.textSecondary)
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            cells.chunked(7).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    row.forEach { color -> Box(Modifier.weight(1f).height(30.dp).clip(RoundedCornerShape(8.dp)).background(color)) }
+                }
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            T14Icon(T14Paths.Check, size = 18.dp, tint = c.successText, strokeWidth = 2.4f)
+            Text(stringResource(R.string.onb1_done), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.successText)
+        }
+    }
+}
+
+/** Slide 2: a big coin with the per-day and bonus amounts. */
+@Composable
+private fun SlideCoins() {
+    val c = T14Theme.colors
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Box(Modifier.size(150.dp).clip(CircleShape).background(if (c.dark) Color(0xFF2A200A) else Color(0xFFFEF3C7)), contentAlignment = Alignment.Center) {
+            Coin14Icon(88.dp)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(stringResource(R.string.onb2_chip_day), stringResource(R.string.onb2_chip_bonus)).forEach {
+                Text(
+                    it, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (c.dark) c.coinText else Color(0xFFB45309),
+                    modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 14.dp, vertical = 8.dp),
+                )
+            }
+        }
+    }
+}
+
+/** Slide 3: the owner's campaign card filling up with testers. */
+@Composable
+private fun SlideOwner() {
+    val c = T14Theme.colors
+    SlideCard {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(
+                Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(Brush.verticalGradient(listOf(Color(0xFF3B82F6), Track14Colors.Blue600))),
+                contentAlignment = Alignment.Center,
+            ) { Text("M", color = Color.White, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp) }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.onb3_card_title), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.onb3_card_sub), fontSize = 13.sp, color = c.textSecondary)
+            }
+        }
+        Row {
+            Text(stringResource(R.string.dash_testers), fontSize = 14.sp, color = c.textBody, modifier = Modifier.weight(1f))
+            Text("9 / 12", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+        Box(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(999.dp)).background(c.progressTrack)) {
+            Box(Modifier.fillMaxWidth(0.75f).fillMaxHeight().clip(RoundedCornerShape(999.dp)).background(Track14Colors.Blue600))
+        }
+        Box(Modifier.height(32.dp)) {
+            listOf("A" to 0xFF0EA5E9, "D" to 0xFF22C55E, "S" to 0xFFF59E0B, "M" to 0xFFEC4899, "B" to 0xFF8B5CF6, "+4" to 0xFF475569).forEachIndexed { i, (t, color) ->
+                Box(
+                    Modifier.offset(x = (i * 24).dp).size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface).padding(2.dp).clip(CircleShape).background(Color(color)),
+                    contentAlignment = Alignment.Center,
+                ) { Text(t, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+            }
+        }
     }
 }
 

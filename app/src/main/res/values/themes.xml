@@ -7,10 +7,11 @@
         <item name="android:windowBackground">@color/track14_window_background</item>
     </style>
 
-    <!-- System splash: brand blue with the 14-segment ring, then the app theme. -->
+    <!-- System splash: white (dark at night) with the blue 14-segment mark, as on the canvas. -->
     <style name="Theme.Track14.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Track14</item>
     </style>
 </resources>

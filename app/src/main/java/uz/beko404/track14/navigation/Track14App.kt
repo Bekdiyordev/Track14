@@ -89,6 +89,8 @@ fun Track14App(
                 darkTheme = darkTheme,
                 onToggleTheme = { settingsViewModel.setTheme(if (darkTheme) ThemeMode.LIGHT else ThemeMode.DARK) },
                 onContinue = settingsViewModel::confirmLanguage,
+                theme = settings.theme,
+                onTheme = settingsViewModel::setTheme,
             )
             return@Track14Theme
         }
@@ -101,7 +103,7 @@ fun Track14App(
         val context = LocalContext.current
         when (val g = gate) {
             is GateState.UpdateRequired, is GateState.Maintenance, is GateState.Blocked -> {
-                GateScreen(g, support)
+                GateScreen(g, support, onSignOut = settingsViewModel::signOut, onRetry = { (context as? android.app.Activity)?.recreate() })
                 return@Track14Theme
             }
             is GateState.Open -> if (g.optionalUpdate) {

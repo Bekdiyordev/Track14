@@ -197,16 +197,16 @@
     <string name="tx_adjustment">Admin tuzatishi</string>
     <string name="error_maintenance">Texnik ishlar olib borilmoqda. Birozdan keyin urinib ko\'ring.</string>
     <string name="error_new_apps_disabled">Yangi ilova qo\'shish vaqtincha yopiq.</string>
-    <string name="gate_update_title">Yangilash kerak</string>
-    <string name="gate_update_body">Ilovaning bu versiyasi endi ishlamaydi. Davom etish uchun yangi versiyani o\'rnating.</string>
+    <string name="gate_update_title">Yangilash majburiy</string>
+    <string name="gate_update_body">Track14 ning yangi versiyasi chiqdi. Davom etish uchun ilovani yangilang.</string>
     <string name="gate_update_action">Yangilash</string>
-    <string name="gate_optional_title">Yangi versiya chiqdi</string>
+    <string name="gate_optional_title">Yangi versiya mavjud</string>
     <string name="gate_optional_body">Yangi imkoniyatlar va tuzatishlar bor. Hozir yangilaysizmi?</string>
     <string name="gate_later">Keyinroq</string>
     <string name="gate_maintenance_title">Texnik ishlar</string>
-    <string name="gate_maintenance_body">Ilovani yaxshilayapmiz. Testlaringiz va Coin14 saqlanadi, birozdan keyin qayting.</string>
-    <string name="gate_blocked_title">Hisob cheklangan</string>
-    <string name="gate_blocked_body">Hisobingiz qoidalar buzilgani sababli vaqtincha cheklandi. Coin14 balansingiz saqlanadi.</string>
+    <string name="gate_maintenance_body">Tizimni yangilayapmiz. Testlaringiz saqlanadi va bu vaqt kunlarga zarar qilmaydi.</string>
+    <string name="gate_blocked_title">Akkauntingiz bloklangan</string>
+    <string name="gate_blocked_body">Coin14 balansingiz saqlanadi. Ilovalaringiz yashirilgan, aktiv testlar pauzada.</string>
     <string name="gate_blocked_reason">Sabab: %1$s</string>
     <string name="support_title">Yordam va aloqa</string>
     <string name="support_contact">Biz bilan bog\'lanish</string>
@@ -222,7 +222,7 @@
     <string name="faq_q4">Ilovam qachon production\'ga tayyor bo\'ladi?</string>
     <string name="faq_a4">Google talabi: kamida 12 tester 14 kun davomida. Dashboard\'da har bir testerning kunlarini ko\'rib turasiz.</string>
     <string name="lang_title">Tilni tanlang</string>
-    <string name="lang_subtitle">Keyin Sozlamalarda o\'zgartirish mumkin</string>
+    <string name="lang_subtitle">Keyinroq sozlamalardan o\'zgartirish mumkin</string>
     <string name="lang_uz" translatable="false">O\'zbekcha</string>
     <string name="lang_ru" translatable="false">Русский</string>
     <string name="lang_en" translatable="false">English</string>
@@ -233,11 +233,11 @@
     <string name="onb_next">Keyingi</string>
     <string name="onb_start">Boshlash</string>
     <string name="onb1_title">Boshqalarning ilovasini test qiling</string>
-    <string name="onb1_body">Har kuni ilovani 30 soniya oching va kunlik Coin14 oling.</string>
-    <string name="onb2_title">Coin14 to\'plang</string>
-    <string name="onb2_body">14 kunni yakunlasangiz bonus, fikr uchun +2. Coin14 yetsa, o\'z ilovangizni joylaysiz.</string>
-    <string name="onb3_title">O\'z ilovangizni chiqaring</string>
-    <string name="onb3_body">12 tester 14 kun davomida: Google Play talabi. Track14 testerlarni topadi va har kunini kuzatadi.</string>
+    <string name="onb1_body">Har kuni ilovani kamida 30 soniya oching. 14 kun davomida katakchalar yashil bo\'lib boradi.</string>
+    <string name="onb2_title">Har bir kun uchun Coin14 oling</string>
+    <string name="onb2_body">Tasdiqlangan har bir kun uchun 3–5 Coin14, 14 kunni tugatsangiz yana 10 Coin14 bonus.</string>
+    <string name="onb3_title">O\'z ilovangizga tester toping</string>
+    <string name="onb3_body">Bir martalik to\'lov bilan ilovangizni joylang — 12+ tester 14 kun test qiladi va siz production\'ga chiqasiz.</string>
     <string name="settings_title">Sozlamalar</string>
     <string name="settings_theme">Mavzu</string>
     <string name="theme_light">Yorug\'</string>
@@ -547,4 +547,32 @@
     <string name="settings_not_granted">Berilmagan</string>
     <string name="settings_version_label">Versiya</string>
     <string name="settings_delete_note">Barcha ma\'lumotlar va Coin14 butunlay o\'chiriladi. Aktiv testlar uziladi.</string>
+    <string name="brand_tagline">12 tester · 14 kun · birgalikda</string>
+    <string name="lang_uz_script">Lotin yozuvi</string>
+    <string name="lang_ru_script">Кириллица</string>
+    <string name="lang_en_script">Latin script</string>
+    <string name="onb1_done">Bugun 47 soniya — bajarildi</string>
+    <string name="onb2_chip_day">+3–5 / kun</string>
+    <string name="onb2_chip_bonus">+10 bonus</string>
+    <string name="onb3_card_title">Mening ilovam</string>
+    <string name="onb3_card_sub">Kampaniya aktiv</string>
+    <string name="gate_you_have">Sizda</string>
+    <string name="gate_new">Yangi versiya</string>
+    <string name="gate_update_store">Play Market\'da yangilash</string>
+    <string name="gate_update_cannot_skip">Bu yangilanishni o\'tkazib bo\'lmaydi</string>
+    <string name="gate_whats_new">NIMA YANGI</string>
+    <string name="gate_retry">Qayta urinish</string>
+    <string name="gate_blocked_lead">Track14 qoidalari buzilgani uchun akkauntingizga kirish cheklandi.</string>
+    <string name="gate_reason">Sabab</string>
+    <string name="gate_appeal">Apellyatsiya yuborish</string>
+    <string name="gate_contact_support">Yordamga murojaat</string>
+    <string name="gate_later_note">Eslatma keyingi versiyada qaytadi</string>
+    <string name="support_contact_caps">BOG\'LANISH</string>
+    <string name="support_telegram_row">Qo\'llab-quvvatlash (Telegram)</string>
+    <string name="support_group_caps">UMUMIY GOOGLE GROUP</string>
+    <string name="support_group_body">Tester bo\'lish uchun shu guruhga a\'zo bo\'lish kerak.</string>
+    <string name="support_join_group">Guruhga qo\'shilish</string>
+    <string name="support_faq_caps">TEZ-TEZ SO\'RALADIGAN SAVOLLAR</string>
+    <string name="support_app_caps">ILOVA</string>
+    <string name="support_check_update">Yangilanishni tekshirish</string>
 </resources>
