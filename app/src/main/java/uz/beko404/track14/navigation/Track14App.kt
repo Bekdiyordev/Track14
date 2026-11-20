@@ -5,6 +5,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import uz.beko404.track14.core.designsystem.ScreenBackground
+import uz.beko404.track14.core.designsystem.T14Theme
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
@@ -110,7 +112,7 @@ fun Track14App(
             GateState.Loading -> Unit
         }
         val navController = rememberNavController()
-        val barLine = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        val t14 = T14Theme.colors
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = backStackEntry?.destination
         val onTopLevel = TopLevelDestination.entries.any { tab ->
@@ -122,10 +124,10 @@ fun Track14App(
             containerColor = Color.Transparent,
             bottomBar = {
                 if (onTopLevel) NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = t14.navBar,
                     tonalElevation = 0.dp,
                     modifier = Modifier.drawBehind {
-                        drawLine(barLine, Offset(0f, 0f), Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
+                        drawLine(t14.navBorder, Offset(0f, 0f), Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
                     },
                 ) {
                     TopLevelDestination.entries.forEach { tab ->
@@ -141,12 +143,19 @@ fun Track14App(
                                 }
                             },
                             icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(stringResource(tab.label), style = MaterialTheme.typography.labelSmall) },
+                            label = {
+                                val selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true
+                                Text(
+                                    stringResource(tab.label),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold),
+                                    maxLines = 1,
+                                )
+                            },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedIconColor = t14.navSelected,
+                                selectedTextColor = t14.navSelected,
+                                unselectedIconColor = t14.navUnselected,
+                                unselectedTextColor = t14.navUnselected,
                                 indicatorColor = Color.Transparent,
                             ),
                         )
@@ -163,6 +172,13 @@ fun Track14App(
                     AppsRoute(
                         onOpenApp = { id -> if (AppIds.isValid(id)) navController.navigate("$APP_DETAIL_ROUTE/$id") },
                         onOpenPublished = { navController.navigate(PUBLISHED_ROUTE) },
+                        onOpenWallet = { navController.navigate(WALLET_ROUTE) },
+                        onSignIn = {
+                            navController.navigate(TopLevelDestination.Profile.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        },
                     )
                 }
                 composable(PUBLISHED_ROUTE) {
@@ -198,6 +214,7 @@ fun Track14App(
                     MyTestsRoute(
                         onFeedback = { id -> navController.navigate("$FEEDBACK_ROUTE/$id") },
                         onOpenTest = { id -> navController.navigate("$TEST_DETAIL_ROUTE/$id") },
+                        onOpenWallet = { navController.navigate(WALLET_ROUTE) },
                     )
                 }
                 composable(

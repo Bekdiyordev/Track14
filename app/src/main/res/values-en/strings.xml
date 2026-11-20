@@ -308,4 +308,21 @@
     <string name="add_apk_too_large">The file is too large (up to 300 MB). Enter the details by hand.</string>
     <string name="add_apk_unreadable">This file could not be read as an APK (make sure it is not an AAB). Enter the details by hand.</string>
     <string name="loading">Loading</string>
+    <string name="reward_per_day_long">+%1$d / day</string>
+    <string name="reward_per_day_short">%1$d/day</string>
+    <string name="testers_progress_long">%1$d / %2$d testers</string>
+    <string name="testers_progress_short">%1$d / %2$d</string>
+    <string name="testers_count">%1$d testers</string>
+    <string name="header_sign_in">Sign in</string>
+    <string name="mytests_today_section">Today</string>
+    <string name="mytests_active">Active tests</string>
+    <string name="mytests_finished_count">Finished tests (%1$d)</string>
+    <string name="mytests_left_coins">+%1$d Coin14 to go</string>
+    <string name="mytests_all_done">All done</string>
+    <string name="mytests_time_left">%1$d h %2$d min left today</string>
+    <string name="mytests_task_done">Done · +%1$d Coin14</string>
+    <string name="mytests_task_pending">Open for 30 seconds · +%1$d Coin14</string>
+    <string name="legend_done">done</string>
+    <string name="legend_missed">missed</string>
+    <string name="legend_today">today</string>
 </resources>

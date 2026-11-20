@@ -31,7 +31,7 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Track14Colors.Blue500,
+    primary = Track14Colors.Blue400,
     onPrimary = Color.White,
     primaryContainer = Color(0xFF14264D),
     onPrimaryContainer = Track14Colors.Blue400,
@@ -72,10 +72,12 @@ fun Track14Theme(
             ) { darkTheme },
         )
     }
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = Track14Typography,
-        shapes = Track14Shapes,
-        content = content,
-    )
+    androidx.compose.runtime.CompositionLocalProvider(LocalT14Colors provides if (darkTheme) DarkExtraColors else LightExtraColors) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColors else LightColors,
+            typography = Track14Typography,
+            shapes = Track14Shapes,
+            content = content,
+        )
+    }
 }

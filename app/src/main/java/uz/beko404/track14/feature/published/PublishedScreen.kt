@@ -1,5 +1,14 @@
 package uz.beko404.track14.feature.published
 
+import uz.beko404.track14.core.designsystem.Manrope
+import uz.beko404.track14.core.designsystem.T14Theme
+import uz.beko404.track14.core.designsystem.T14Paths
+import uz.beko404.track14.core.designsystem.T14Icon
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -156,16 +165,25 @@ private fun Stat(value: String, label: String, modifier: Modifier) {
 /** Home banner: "N apps shipped through Track14". */
 @Composable
 fun PublishedBanner(totals: PublishedTotals, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Track14Colors.Navy, contentColor = Color.White),
-        contentPadding = PaddingValues(16.dp),
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .shadow(12.dp, shape, ambientColor = Color(0x380F172A), spotColor = Color(0x380F172A))
+            .clip(shape)
+            .background(Brush.linearGradient(T14Theme.colors.bannerBrush))
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.published_banner, totals.count), fontWeight = FontWeight.ExtraBold)
-            Text(stringResource(R.string.published_banner_sub), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+        Box(
+            Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) { T14Icon(T14Paths.Star, size = 22.dp, tint = Color.White) }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.published_banner, totals.count), color = Color.White, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+            Text(stringResource(R.string.published_banner_sub), color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
         }
+        T14Icon(T14Paths.Chevron, size = 18.dp, tint = Color.White, strokeWidth = 2.2f)
     }
 }
