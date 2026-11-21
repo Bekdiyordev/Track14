@@ -1,8 +1,9 @@
 <resources>
-    <string name="tab_apps">Приложения</string>
     <string name="tab_my_tests">Мои тесты</string>
     <string name="tab_my_apps">Мои приложения</string>
-    <string name="nav_my_apps">Мои приложения</string>
+    <string name="nav_home">Главная</string>
+    <string name="nav_my_tests">Мои тесты</string>
+    <string name="nav_my_apps">Приложения</string>
     <string name="tab_profile">Профиль</string>
     <string name="placeholder_soon">Скоро</string>
     <string name="profile_signed_out_title">Войдите в аккаунт</string>

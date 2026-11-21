@@ -7,6 +7,8 @@ import androidx.compose.material3.NavigationBarItem
 import uz.beko404.track14.core.designsystem.ScreenBackground
 import uz.beko404.track14.core.designsystem.T14Theme
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
@@ -155,6 +157,9 @@ fun Track14App(
                                     stringResource(tab.label),
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold),
                                     maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center,
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(

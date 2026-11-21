@@ -1,7 +1,8 @@
 <resources>
-    <string name="tab_apps">Apps</string>
     <string name="tab_my_tests">My tests</string>
     <string name="tab_my_apps">My apps</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_my_tests">My tests</string>
     <string name="nav_my_apps">My apps</string>
     <string name="tab_profile">Profile</string>
     <string name="placeholder_soon">Coming soon</string>

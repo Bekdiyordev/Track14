@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name" translatable="false">Track14</string>
-    <string name="tab_apps">Ilovalar</string>
     <string name="tab_my_tests">Testlarim</string>
     <string name="tab_my_apps">Mening ilovalarim</string>
+    <string name="nav_home">Asosiy</string>
+    <string name="nav_my_tests">Testlarim</string>
     <string name="nav_my_apps">Ilovalarim</string>
     <string name="tab_profile">Profil</string>
     <string name="placeholder_soon">Tez orada</string>
