@@ -1,7 +1,9 @@
 <resources>
-    <string name="tab_apps">Приложения</string>
     <string name="tab_my_tests">Мои тесты</string>
     <string name="tab_my_apps">Мои приложения</string>
+    <string name="nav_home">Главная</string>
+    <string name="nav_my_tests">Мои тесты</string>
+    <string name="nav_my_apps">Приложения</string>
     <string name="tab_profile">Профиль</string>
     <string name="placeholder_soon">Скоро</string>
     <string name="profile_signed_out_title">Войдите в аккаунт</string>
@@ -570,7 +572,6 @@
     <string name="support_app_caps">ПРИЛОЖЕНИЕ</string>
     <string name="support_check_update">Проверить обновления</string>
     <string name="published_on">вышло %1$s</string>
-    <string name="tab_my_apps_short">Мои</string>
     <string name="apps_error_desc">Проверьте интернет и откройте снова чуть позже.</string>
     <string name="apps_empty_desc">Новые приложения для теста появятся здесь.</string>
     <string name="apps_no_results_desc">Попробуйте другое слово или категорию.</string>

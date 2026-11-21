@@ -76,6 +76,8 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun previewLanguage(language: AppLanguage) = store.previewLanguage(language)
+
     /** Language screen: keep the current language but remember that the choice was made. */
     fun confirmLanguage(language: AppLanguage) = setLanguage(language)
 

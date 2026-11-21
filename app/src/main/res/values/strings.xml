@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name" translatable="false">Track14</string>
-    <string name="tab_apps">Ilovalar</string>
     <string name="tab_my_tests">Testlarim</string>
     <string name="tab_my_apps">Mening ilovalarim</string>
+    <string name="nav_home">Asosiy</string>
+    <string name="nav_my_tests">Testlarim</string>
+    <string name="nav_my_apps">Ilovalarim</string>
     <string name="tab_profile">Profil</string>
     <string name="placeholder_soon">Tez orada</string>
     <string name="profile_signed_out_title">Hisobingizga kiring</string>
@@ -576,7 +578,6 @@
     <string name="support_app_caps">ILOVA</string>
     <string name="support_check_update">Yangilanishni tekshirish</string>
     <string name="published_on">%1$s chiqqan</string>
-    <string name="tab_my_apps_short">Ilovalarim</string>
     <string name="apps_error_desc">Internet aloqasini tekshirib, birozdan keyin qayta oching.</string>
     <string name="apps_empty_desc">Yangi ilovalar test uchun qo\'shilganda shu yerda chiqadi.</string>
     <string name="apps_no_results_desc">Boshqa so\'z yoki kategoriya bilan qidirib ko\'ring.</string>

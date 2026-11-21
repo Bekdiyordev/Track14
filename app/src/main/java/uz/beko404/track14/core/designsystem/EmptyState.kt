@@ -79,4 +79,3 @@ object EmptyIcons {
     const val Cart = "M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6 M9 21h.01M18 21h.01"
     const val Cloud = "M7 18a4 4 0 0 1-.5-8 6 6 0 0 1 11.6 1.5A3.5 3.5 0 0 1 17.5 18z M12 11v3M12 16.5v.5"
 }
-
